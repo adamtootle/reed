@@ -69,4 +69,19 @@ describe('api/client', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404 }));
     await expect(putFile('missing.md', 'x')).rejects.toThrow(/404/);
   });
+
+  it('getConfig rejects on non-2xx', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }));
+    await expect(getConfig()).rejects.toThrow(/500/);
+  });
+
+  it('getFiles rejects on non-2xx', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }));
+    await expect(getFiles()).rejects.toThrow(/500/);
+  });
+
+  it('getFile rejects on non-2xx', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404 }));
+    await expect(getFile('missing.md')).rejects.toThrow(/404/);
+  });
 });

@@ -25,7 +25,7 @@ export async function putFile(path: string, content: string): Promise<void> {
     method: 'PUT',
     headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     body: content,
-    keepalive: true,
+    keepalive: true, // lets the save complete even if the tab is closed mid-request; 64KB body cap
   });
   if (!res.ok) throw new Error(`putFile failed: ${res.status}`);
 }
