@@ -6,7 +6,7 @@ describe('applyMode', () => {
   it('inline mode installs decorations', () => {
     const parent = document.createElement('div');
     document.body.appendChild(parent);
-    const ed = createEditor(parent, '# Hello');
+    const ed = createEditor(parent, { initialDoc: '# Hello' });
     applyMode(ed, 'inline');
     ed.view.requestMeasure();
     const html = ed.view.dom.innerHTML;
@@ -17,7 +17,7 @@ describe('applyMode', () => {
   it('split mode removes decorations and switches to monospace', () => {
     const parent = document.createElement('div');
     document.body.appendChild(parent);
-    const ed = createEditor(parent, '# Hello');
+    const ed = createEditor(parent, { initialDoc: '# Hello' });
     applyMode(ed, 'inline');
     applyMode(ed, 'split');
     ed.view.requestMeasure();

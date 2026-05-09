@@ -1,5 +1,5 @@
 import { EditorState, Compartment } from '@codemirror/state';
-import { EditorView, keymap, drawSelection, lineNumbers, highlightActiveLine } from '@codemirror/view';
+import { EditorView, keymap, drawSelection } from '@codemirror/view';
 import { history, historyKeymap, defaultKeymap, indentWithTab } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
 import { GFM } from '@lezer/markdown';
@@ -13,12 +13,21 @@ export interface ReedEditor {
   destroy(): void;
 }
 
-export function createEditor(parent: HTMLElement, initialDoc: string): ReedEditor {
+export interface CreateEditorOptions {
+  initialDoc: string;
+  onDocChange?: () => void;
+}
+
+export function createEditor(parent: HTMLElement, opts: CreateEditorOptions): ReedEditor {
   const decorationsCompartment = new Compartment();
   const fontCompartment = new Compartment();
 
+  const updateListener = EditorView.updateListener.of((u) => {
+    if (u.docChanged) opts.onDocChange?.();
+  });
+
   const state = EditorState.create({
-    doc: initialDoc,
+    doc: opts.initialDoc,
     extensions: [
       history(),
       drawSelection(),
@@ -29,6 +38,7 @@ export function createEditor(parent: HTMLElement, initialDoc: string): ReedEdito
       fontCompartment.of(EditorView.theme({
         '&': { fontFamily: 'ui-sans-serif, system-ui, sans-serif', fontSize: '15px' },
       })),
+      updateListener,
     ],
   });
 
@@ -49,6 +59,3 @@ export function createEditor(parent: HTMLElement, initialDoc: string): ReedEdito
     },
   };
 }
-
-// Re-export so callers don't need to import from @codemirror/view directly.
-export { EditorView, lineNumbers, highlightActiveLine };

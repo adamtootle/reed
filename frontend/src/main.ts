@@ -1,8 +1,9 @@
 import './styles/main.css';
-import { getConfig, getFile, getFiles } from './api/client';
+import { getConfig, getFile, getFiles, putFile } from './api/client';
 import { initialAppState } from './state/types';
 import { createStore } from './state/store';
 import { computePillState } from './state/saveStateMachine';
+import { createDebouncer } from './state/debounce';
 import { ThemeController } from './theme/theme';
 import { Pill } from './ui/pill';
 import { FileTree } from './ui/fileTree';
@@ -29,10 +30,34 @@ fileTree.onSelect = (path) => loadFile(path);
 let editor: ReedEditor | null = null;
 let lastMode: 'inline' | 'split' | null = null;
 
+async function performSave(): Promise<void> {
+  const s = store.get();
+  if (!s.currentFile || !editor) return;
+  const content = editor.getDoc();
+  store.set({ saveState: 'saving' });
+  try {
+    await putFile(s.currentFile, content);
+    store.set({ saveState: 'saved', loadedContent: content });
+  } catch (err) {
+    console.error('save failed', err);
+    store.set({ saveState: 'saveFailed' });
+  }
+}
+
+const saveDebouncer = createDebouncer(performSave, 750);
+
 function ensureEditor(): ReedEditor {
   if (editor) return editor;
   editorPane.innerHTML = '';
-  editor = createEditor(editorPane, '');
+  editor = createEditor(editorPane, {
+    initialDoc: '',
+    onDocChange: () => {
+      const s = store.get();
+      if (s.currentFile === null) return;
+      store.set({ saveState: 'unsaved' });
+      saveDebouncer.trigger();
+    },
+  });
   applyMode(editor, store.get().viewMode);
   lastMode = store.get().viewMode;
   return editor;
@@ -77,6 +102,7 @@ store.subscribe(() => {
 renderPill();
 
 async function loadFile(path: string): Promise<void> {
+  saveDebouncer.flush();
   try {
     const content = await getFile(path);
     const ed = ensureEditor();
@@ -97,6 +123,11 @@ window.addEventListener('keydown', (ev) => {
     const next = store.get().viewMode === 'inline' ? 'split' : 'inline';
     store.set({ viewMode: next });
   }
+});
+
+window.addEventListener('blur', () => saveDebouncer.flush());
+window.addEventListener('beforeunload', () => {
+  if (saveDebouncer.isPending()) saveDebouncer.flush();
 });
 
 (async () => {
