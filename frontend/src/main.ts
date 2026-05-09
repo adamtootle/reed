@@ -1,11 +1,12 @@
 import './styles/main.css';
-import { getConfig, getFiles } from './api/client';
+import { getConfig, getFile, getFiles } from './api/client';
 import { initialAppState } from './state/types';
 import { createStore } from './state/store';
 import { computePillState } from './state/saveStateMachine';
 import { ThemeController } from './theme/theme';
 import { Pill } from './ui/pill';
 import { FileTree } from './ui/fileTree';
+import { createEditor, type ReedEditor } from './editor/setup';
 
 const store = createStore(initialAppState);
 const theme = new ThemeController();
@@ -18,14 +19,20 @@ const pillRoot = document.getElementById('pill') as HTMLElement;
 const editorPane = document.getElementById('editor-pane') as HTMLElement;
 
 const pill = new Pill(pillRoot);
-pill.onThemeChange = (t) => {
-  theme.setOverride(t);
-  store.set({ theme: t });
-};
+pill.onThemeChange = (t) => { theme.setOverride(t); store.set({ theme: t }); };
 pill.onModeChange = (m) => store.set({ viewMode: m });
 
 const fileTree = new FileTree(sidebarTree);
-fileTree.onSelect = (path) => store.set({ currentFile: path });
+fileTree.onSelect = (path) => loadFile(path);
+
+let editor: ReedEditor | null = null;
+
+function ensureEditor(): ReedEditor {
+  if (editor) return editor;
+  editorPane.innerHTML = '';
+  editor = createEditor(editorPane, '');
+  return editor;
+}
 
 function renderPill(): void {
   const s = store.get();
@@ -46,20 +53,28 @@ function renderShell(): void {
   if (s.config?.mode === 'directory') {
     sidebar.classList.remove('hidden');
     sidebar.classList.add('flex');
-    sidebarTitle.textContent = '~/notes'; // placeholder; backend doesn't expose root path
+    sidebarTitle.textContent = '~/notes';
   } else {
     sidebar.classList.add('hidden');
     sidebar.classList.remove('flex');
   }
 }
 
-store.subscribe(() => {
-  renderPill();
-  renderTree();
-  renderShell();
-});
-
+store.subscribe(() => { renderPill(); renderTree(); renderShell(); });
 renderPill();
+
+async function loadFile(path: string): Promise<void> {
+  try {
+    const content = await getFile(path);
+    const ed = ensureEditor();
+    ed.setDoc(content);
+    store.set({ currentFile: path, loadedContent: content, saveState: 'saved' });
+  } catch (err) {
+    console.error('loadFile failed', err);
+    editorPane.innerHTML = `<div class="h-full flex items-center justify-center text-zinc-500">File no longer exists.</div>`;
+    store.set({ currentFile: null, loadedContent: null });
+  }
+}
 
 editorPane.innerHTML = `<div class="h-full flex items-center justify-center text-zinc-500">Loading…</div>`;
 
@@ -70,8 +85,10 @@ editorPane.innerHTML = `<div class="h-full flex items-center justify-center text
     if (config.mode === 'directory') {
       const tree = await getFiles();
       store.set({ fileTree: tree, sseConnected: true });
-    } else {
+      editorPane.innerHTML = `<div class="h-full flex items-center justify-center text-zinc-500">Select a file to open.</div>`;
+    } else if (config.mode === 'singleFile') {
       store.set({ sseConnected: true });
+      await loadFile(config.file);
     }
   } catch (err) {
     editorPane.innerHTML = `<div class="h-full flex items-center justify-center text-zinc-500">Connection lost — refresh the page when reed is running again.</div>`;
