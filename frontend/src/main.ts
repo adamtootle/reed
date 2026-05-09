@@ -14,6 +14,7 @@ import { ConflictBanner } from './ui/conflictBanner';
 import { Splitter } from './ui/splitter';
 import { renderMarkdown } from './preview/markdown';
 import { renderMermaidBlocks } from './preview/mermaid';
+import { ScrollSync } from './preview/scrollSync';
 
 const store = createStore(initialAppState);
 const theme = new ThemeController();
@@ -39,6 +40,7 @@ fileTree.onSelect = (path) => loadFile(path);
 
 let editor: ReedEditor | null = null;
 let lastMode: 'inline' | 'split' | null = null;
+let scrollSync: ScrollSync | null = null;
 
 const splitter = new Splitter({
   container: splitContainer,
@@ -57,10 +59,18 @@ function syncSplitChrome(): void {
     previewSide.classList.remove('hidden');
     editorSide.style.flex = '1 1 50%';
     previewSide.style.flex = '1 1 50%';
+    if (editor && !scrollSync) {
+      scrollSync = new ScrollSync({ view: editor.view, preview: previewSide });
+      scrollSync.start();
+    }
   } else {
     splitHandle.classList.add('hidden');
     previewSide.classList.add('hidden');
     editorSide.style.flex = '1 1 100%';
+    if (scrollSync) {
+      scrollSync.stop();
+      scrollSync = null;
+    }
   }
 }
 
