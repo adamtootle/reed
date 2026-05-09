@@ -8,7 +8,19 @@
   </head>
   <body class="h-full bg-zinc-50 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">
     <div id="app" class="h-full">
-      <div id="layout" class="h-full flex"></div>
+      <div id="layout" class="h-full flex">
+        <aside id="sidebar" class="w-64 shrink-0 border-r border-zinc-200 dark:border-zinc-800 hidden flex-col">
+          <header id="sidebar-header" class="px-3 py-2 text-xs font-semibold flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-800">
+            <span id="sidebar-title" class="flex-1 truncate"></span>
+            <button id="sidebar-collapse" class="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300" aria-label="Collapse sidebar">⇤</button>
+          </header>
+          <div id="sidebar-tree" class="flex-1 overflow-auto px-1 py-2 text-sm"></div>
+        </aside>
+        <main id="main" class="flex-1 relative overflow-hidden">
+          <div id="pill"></div>
+          <div id="editor-pane" class="h-full"></div>
+        </main>
+      </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
