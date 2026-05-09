@@ -11,11 +11,11 @@ struct ReedServer {
     func run() async throws {
         let watcher = FileWatcher(root: root)
         watcher.onChange = { [broadcaster] relativePath in
-            let escaped = relativePath
-                .replacingOccurrences(of: "\\", with: "\\\\")
-                .replacingOccurrences(of: "\"", with: "\\\"")
+            let payload = ["path": relativePath]
+            guard let data = try? JSONEncoder().encode(payload),
+                  let json = String(data: data, encoding: .utf8) else { return }
             Task {
-                await broadcaster.broadcast(event: "fileChanged", data: "{\"path\":\"\(escaped)\"}")
+                await broadcaster.broadcast(event: "fileChanged", data: json)
             }
         }
         watcher.start()

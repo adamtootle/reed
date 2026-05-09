@@ -15,16 +15,20 @@ final class FileWatcher: @unchecked Sendable {
     }
 
     func start() {
-        modSnapshot = buildSnapshot()
-        for dir in collectWatchedDirectories() {
-            addWatch(for: dir)
+        queue.sync {
+            modSnapshot = buildSnapshot()
+            for dir in collectWatchedDirectories() {
+                addWatch(for: dir)
+            }
         }
     }
 
     func stop() {
-        sources.forEach { $0.cancel() }
-        sources.removeAll()
-        watchedPaths.removeAll()
+        queue.sync {
+            sources.forEach { $0.cancel() }
+            sources.removeAll()
+            watchedPaths.removeAll()
+        }
     }
 
     deinit {
