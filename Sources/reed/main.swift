@@ -16,12 +16,21 @@ struct Reed: ParsableCommand {
     @Argument(help: "Markdown file or directory (defaults to current directory)")
     var path: String?
 
+    @Option(name: .long, help: "Port to bind (default: 8765 in dev, OS-assigned in release; 0 = OS-assigned)")
+    var port: UInt16?
+
     mutating func run() throws {
         let (root, mode) = try resolveInput(path: path)
-        let port = findAvailablePort()
-        let server = ReedServer(root: root, mode: mode, port: port)
+        let resolvedPort: UInt16
+        do {
+            resolvedPort = try resolvePort(requested: port)
+        } catch let error as PortInUseError {
+            fputs("reed: \(error.description)\n", stderr)
+            throw ExitCode.failure
+        }
+        let server = ReedServer(root: root, mode: mode, port: resolvedPort)
 
-        print("Listening on http://localhost:\(port)")
+        print("Listening on http://localhost:\(resolvedPort)")
 
         Task {
             do {
@@ -59,6 +68,47 @@ func resolveInput(path: String?) throws -> (root: URL, mode: LaunchMode) {
     }
 }
 
+func defaultPort() -> UInt16 {
+    #if DEBUG
+    return 8765
+    #else
+    return 0
+    #endif
+}
+
+struct PortInUseError: Error, CustomStringConvertible {
+    let port: UInt16
+    var description: String { "port \(port) is already in use" }
+}
+
+func resolvePort(requested: UInt16?) throws -> UInt16 {
+    let candidate = requested ?? defaultPort()
+    if candidate == 0 {
+        return findAvailablePort()
+    }
+    let sock = Darwin.socket(AF_INET, SOCK_STREAM, 0)
+    precondition(sock >= 0, "socket() failed")
+    defer { Darwin.close(sock) }
+
+    var reuse: Int32 = 1
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &reuse, socklen_t(MemoryLayout<Int32>.size))
+
+    var addr = sockaddr_in()
+    addr.sin_family = sa_family_t(AF_INET)
+    addr.sin_port = candidate.bigEndian
+    addr.sin_addr = in_addr(s_addr: INADDR_ANY)
+
+    let bindResult = withUnsafePointer(to: &addr) {
+        $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+            Darwin.bind(sock, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
+        }
+    }
+    if bindResult != 0 {
+        throw PortInUseError(port: candidate)
+    }
+    return candidate
+}
+
 func findAvailablePort() -> UInt16 {
     let sock = Darwin.socket(AF_INET, SOCK_STREAM, 0)
     precondition(sock >= 0, "socket() failed")
@@ -85,6 +135,5 @@ func findAvailablePort() -> UInt16 {
             getsockname(sock, $0, &len)
         }
     }
-
     return UInt16(bigEndian: addr.sin_port)
 }
