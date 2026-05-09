@@ -80,5 +80,6 @@ final class FileTreeTests: XCTestCase {
         for i in 1...201 { makeFile("file\(i).md") }
         let result = buildFileTreeResult(root: tempDir, gitIgnore: GitIgnore(content: ""))
         XCTAssertTrue(result.cappedAt200)
+        XCTAssertEqual(result.nodes.count, 200)
     }
 }

@@ -1,6 +1,7 @@
 import AppKit
 import Foundation
 import Hummingbird
+import UniformTypeIdentifiers
 
 struct ReedServer {
     let root: URL
@@ -40,6 +41,23 @@ struct ReedServer {
 
         router.get("/") { _, _ -> Response in
             serveResource(name: "index", extension: "html", contentType: "text/html; charset=utf-8")
+        }
+
+        router.get("/api/config") { [mode] _, _ -> Response in
+            var obj: [String: String] = [:]
+            switch mode {
+            case .directory:
+                obj["mode"] = "directory"
+            case .singleFile(let filename):
+                obj["mode"] = "singleFile"
+                obj["file"] = filename
+            }
+            guard let data = try? JSONEncoder().encode(obj) else {
+                return Response(status: .internalServerError, headers: [:], body: ResponseBody(byteBuffer: ByteBuffer()))
+            }
+            var headers = HTTPFields()
+            headers[.contentType] = "application/json"
+            return Response(status: .ok, headers: headers, body: ResponseBody(byteBuffer: ByteBuffer(bytes: data)))
         }
 
         let fileAPI = FileAPI(root: root)
@@ -92,7 +110,12 @@ struct ReedServer {
                   let data = try? Data(contentsOf: resolved) else {
                 return Response(status: .notFound, headers: [:], body: ResponseBody(byteBuffer: ByteBuffer()))
             }
-            return Response(status: .ok, headers: [:], body: ResponseBody(byteBuffer: ByteBuffer(bytes: data)))
+            var responseHeaders = HTTPFields()
+            let ext = resolved.pathExtension
+            if !ext.isEmpty, let mime = UTType(filenameExtension: ext)?.preferredMIMEType {
+                responseHeaders[.contentType] = mime
+            }
+            return Response(status: .ok, headers: responseHeaders, body: ResponseBody(byteBuffer: ByteBuffer(bytes: data)))
         }
 
         return router

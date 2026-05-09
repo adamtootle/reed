@@ -57,6 +57,8 @@ final class FileWatcher: @unchecked Sendable {
         for (path, date) in newSnapshot where modSnapshot[path] != date {
             onChange?(path)
         }
+        // Deleted files silently drop from snapshot — no event fired.
+        // Frontend re-fetches /api/files after any fileChanged event.
         modSnapshot = newSnapshot
         // Add watches for any new subdirectories that appeared
         for dir in collectWatchedDirectories() {

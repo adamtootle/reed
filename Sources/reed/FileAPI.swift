@@ -32,6 +32,9 @@ struct FileAPI {
         guard let resolved = try? validatePath(root: root, relativePath: relativePath) else {
             return errorResponse(.forbidden, "forbidden")
         }
+        guard resolved.pathExtension == "md" else {
+            return errorResponse(.forbidden, "forbidden")
+        }
         guard let content = try? String(contentsOf: resolved, encoding: .utf8) else {
             return errorResponse(.notFound, "not found")
         }
@@ -46,6 +49,9 @@ struct FileAPI {
 
     func writeFile(relativePath: String, content: String) -> Response {
         guard let resolved = try? validatePath(root: root, relativePath: relativePath) else {
+            return errorResponse(.forbidden, "forbidden")
+        }
+        guard resolved.pathExtension == "md" else {
             return errorResponse(.forbidden, "forbidden")
         }
         guard FileManager.default.fileExists(atPath: resolved.path) else {
