@@ -1,6 +1,9 @@
+// We import defineConfig from vitest/config so the `test:` block typechecks.
+// `@tailwindcss/vite`'s plugin export uses Vite's Plugin type directly, which is
+// slightly broader than vitest/config's re-exported Plugin. The `as any` cast
+// silences the structural mismatch — it's a known cost of co-configuring vite
+// and vitest in the same file.
 import { defineConfig } from 'vitest/config';
-// Cast plugin to any to avoid Vite version mismatch between vitest's bundled
-// vite and the top-level vite package (@tailwindcss/vite is built against vite@6).
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
