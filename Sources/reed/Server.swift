@@ -6,6 +6,7 @@ struct ReedServer {
     let root: URL
     let mode: LaunchMode
     let port: UInt16
+    let broadcaster = SSEBroadcaster()
 
     func run() async throws {
         let router = buildRouter()
@@ -45,6 +46,24 @@ struct ReedServer {
             let content = String(bytes: bodyBuffer.readableBytesView, encoding: .utf8) ?? ""
             let path = request.uri.queryParameters.get("path") ?? ""
             return fileAPI.writeFile(relativePath: path, content: content)
+        }
+
+        router.get("/events") { [broadcaster] _, _ -> Response in
+            let id = UUID()
+            let (stream, continuation) = AsyncStream<ByteBuffer>.makeStream()
+            continuation.onTermination = { _ in
+                Task { await broadcaster.remove(id: id) }
+            }
+            await broadcaster.add(id: id, continuation: continuation)
+
+            var headers = HTTPFields()
+            headers[.contentType] = "text/event-stream"
+            headers[.cacheControl] = "no-cache"
+            return Response(
+                status: .ok,
+                headers: headers,
+                body: ResponseBody(asyncSequence: stream)
+            )
         }
 
         // Wildcard: serve arbitrary files from root (images, etc. for markdown preview).
