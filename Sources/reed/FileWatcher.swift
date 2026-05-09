@@ -7,6 +7,7 @@ final class FileWatcher: @unchecked Sendable {
     private let queue = DispatchQueue(label: "reed.filewatcher", qos: .utility)
     private var sources: [DispatchSourceFileSystemObject] = []
     private var modSnapshot: [String: Date] = [:]
+    private var watchedPaths: Set<String> = []
     var onChange: ChangeHandler?
 
     init(root: URL) {
@@ -23,12 +24,19 @@ final class FileWatcher: @unchecked Sendable {
     func stop() {
         sources.forEach { $0.cancel() }
         sources.removeAll()
+        watchedPaths.removeAll()
+    }
+
+    deinit {
+        stop()
     }
 
     private func addWatch(for directory: URL) {
-        let fd = Darwin.open(directory.path, O_EVTONLY)
+        let path = directory.path
+        guard !watchedPaths.contains(path) else { return }
+        let fd = Darwin.open(path, O_EVTONLY)
         guard fd >= 0 else { return }
-
+        watchedPaths.insert(path)
         let source = DispatchSource.makeFileSystemObjectSource(
             fileDescriptor: fd,
             eventMask: .write,
@@ -46,6 +54,10 @@ final class FileWatcher: @unchecked Sendable {
             onChange?(path)
         }
         modSnapshot = newSnapshot
+        // Add watches for any new subdirectories that appeared
+        for dir in collectWatchedDirectories() {
+            addWatch(for: dir)
+        }
     }
 
     private func buildSnapshot() -> [String: Date] {
