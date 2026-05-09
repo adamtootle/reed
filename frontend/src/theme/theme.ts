@@ -10,7 +10,7 @@ export function applyTheme(dark: boolean): void {
   document.documentElement.classList.toggle('dark', dark);
 }
 
-type Listener = (ev: { matches: boolean }) => void;
+type Listener = (ev: MediaQueryListEvent) => void;
 
 export class ThemeController {
   private override: ThemeOverride = 'auto';
@@ -20,13 +20,13 @@ export class ThemeController {
   start(): void {
     this.mql = window.matchMedia('(prefers-color-scheme: dark)');
     this.listener = (ev) => this.apply(ev.matches);
-    this.mql.addEventListener('change', this.listener as EventListener);
+    this.mql.addEventListener('change', this.listener);
     this.apply(this.mql.matches);
   }
 
   stop(): void {
     if (this.mql && this.listener) {
-      this.mql.removeEventListener('change', this.listener as EventListener);
+      this.mql.removeEventListener('change', this.listener);
     }
     this.mql = null;
     this.listener = null;
