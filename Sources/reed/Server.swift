@@ -9,6 +9,18 @@ struct ReedServer {
     let broadcaster = SSEBroadcaster()
 
     func run() async throws {
+        let watcher = FileWatcher(root: root)
+        watcher.onChange = { [broadcaster] relativePath in
+            let escaped = relativePath
+                .replacingOccurrences(of: "\\", with: "\\\\")
+                .replacingOccurrences(of: "\"", with: "\\\"")
+            Task {
+                await broadcaster.broadcast(event: "fileChanged", data: "{\"path\":\"\(escaped)\"}")
+            }
+        }
+        watcher.start()
+        defer { watcher.stop() }
+
         let router = buildRouter()
         let url = URL(string: "http://localhost:\(port)")!
         let app = Application(
