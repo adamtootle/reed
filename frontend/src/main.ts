@@ -9,6 +9,8 @@ import { Pill } from './ui/pill';
 import { FileTree } from './ui/fileTree';
 import { createEditor, type ReedEditor } from './editor/setup';
 import { applyMode } from './editor/modes';
+import { SSEClient } from './api/sse';
+import { ConflictBanner } from './ui/conflictBanner';
 
 const store = createStore(initialAppState);
 const theme = new ThemeController();
@@ -130,16 +132,65 @@ window.addEventListener('beforeunload', () => {
   if (saveDebouncer.isPending()) saveDebouncer.flush();
 });
 
+const conflictBanner = new ConflictBanner(document.getElementById('conflict-banner') as HTMLElement);
+conflictBanner.onReload = () => {
+  const s = store.get();
+  if (s.conflict && editor) {
+    editor.setDoc(s.conflict.diskContent);
+    store.set({ loadedContent: s.conflict.diskContent, conflict: null, saveState: 'saved' });
+    conflictBanner.hide();
+  }
+};
+conflictBanner.onKeep = () => {
+  store.set({ conflict: null });
+  conflictBanner.hide();
+};
+
+const sse = new SSEClient();
+sse.onConnect = () => store.set({ sseConnected: true });
+sse.onDisconnect = () => store.set({ sseConnected: false });
+sse.onFileChanged = async (path: string) => {
+  // Always refresh the tree
+  if (store.get().config?.mode === 'directory') {
+    try {
+      const tree = await getFiles();
+      store.set({ fileTree: tree });
+    } catch (e) {
+      console.error('tree refresh failed', e);
+    }
+  }
+  // If the changed file is the currently-open one, fetch and reconcile
+  const s = store.get();
+  if (s.currentFile !== path || !editor) return;
+  let disk: string;
+  try {
+    disk = await getFile(path);
+  } catch (e) {
+    console.error('refetch on change failed', e);
+    return;
+  }
+  if (disk === editor.getDoc()) return; // self-write echo or otherwise no diff
+  const isClean = !saveDebouncer.isPending() && s.saveState === 'saved' && editor.getDoc() === s.loadedContent;
+  if (isClean) {
+    editor.setDoc(disk);
+    store.set({ loadedContent: disk });
+  } else {
+    store.set({ conflict: { diskContent: disk } });
+    conflictBanner.show();
+  }
+};
+sse.start();
+window.addEventListener('beforeunload', () => sse.stop());
+
 (async () => {
   try {
     const config = await getConfig();
     store.set({ config });
     if (config.mode === 'directory') {
       const tree = await getFiles();
-      store.set({ fileTree: tree, sseConnected: true });
+      store.set({ fileTree: tree });
       editorPane.innerHTML = `<div class="h-full flex items-center justify-center text-zinc-500">Select a file to open.</div>`;
     } else if (config.mode === 'singleFile') {
-      store.set({ sseConnected: true });
       await loadFile(config.file);
     }
   } catch (err) {

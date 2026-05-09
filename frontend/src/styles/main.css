@@ -128,3 +128,38 @@ html, body, #app {
 .dark .cm-md-blockquote { border-left-color: rgb(63, 63, 70); color: rgb(161, 161, 170); }
 .cm-md-link { color: rgb(37, 99, 235); text-decoration: underline; }
 .dark .cm-md-link { color: rgb(96, 165, 250); }
+
+.reed-conflict-banner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+}
+.reed-conflict-banner:empty { display: none; }
+.reed-conflict-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: rgba(254, 243, 199, 0.96);
+  color: rgb(120, 53, 15);
+  border-bottom: 1px solid rgba(252, 211, 77, 0.8);
+  font-size: 13px;
+}
+.dark .reed-conflict-content {
+  background: rgba(120, 53, 15, 0.9);
+  color: rgb(254, 243, 199);
+  border-bottom-color: rgba(180, 83, 9, 0.8);
+}
+.reed-conflict-btn {
+  all: unset;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  font-weight: 500;
+}
+.dark .reed-conflict-btn { background: rgba(255, 255, 255, 0.15); }
+.reed-conflict-btn:hover { background: rgba(255, 255, 255, 0.9); }
+.dark .reed-conflict-btn:hover { background: rgba(255, 255, 255, 0.25); }
