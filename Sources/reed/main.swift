@@ -26,6 +26,7 @@ struct Reed: ParsableCommand {
         Task {
             do {
                 try await server.run()
+                Darwin.exit(0)
             } catch {
                 fputs("reed: server error: \(error)\n", stderr)
                 Darwin.exit(1)

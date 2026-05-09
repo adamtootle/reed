@@ -32,7 +32,9 @@ struct FileAPI {
         guard let resolved = try? validatePath(root: root, relativePath: relativePath) else {
             return errorResponse(.forbidden, "forbidden")
         }
-        guard resolved.pathExtension == "md" else {
+        let isMarkdown = resolved.pathExtension.lowercased() == "md"
+        let isReadme = resolved.deletingPathExtension().lastPathComponent.lowercased() == "readme"
+        guard isMarkdown || isReadme else {
             return errorResponse(.forbidden, "forbidden")
         }
         guard let content = try? String(contentsOf: resolved, encoding: .utf8) else {
@@ -51,7 +53,9 @@ struct FileAPI {
         guard let resolved = try? validatePath(root: root, relativePath: relativePath) else {
             return errorResponse(.forbidden, "forbidden")
         }
-        guard resolved.pathExtension == "md" else {
+        let isMarkdown = resolved.pathExtension.lowercased() == "md"
+        let isReadme = resolved.deletingPathExtension().lastPathComponent.lowercased() == "readme"
+        guard isMarkdown || isReadme else {
             return errorResponse(.forbidden, "forbidden")
         }
         guard FileManager.default.fileExists(atPath: resolved.path) else {
