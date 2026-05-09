@@ -2,6 +2,7 @@ import { EditorState, Compartment } from '@codemirror/state';
 import { EditorView, keymap, drawSelection, lineNumbers, highlightActiveLine } from '@codemirror/view';
 import { history, historyKeymap, defaultKeymap, indentWithTab } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
+import { GFM } from '@lezer/markdown';
 
 export interface ReedEditor {
   view: EditorView;
@@ -22,7 +23,7 @@ export function createEditor(parent: HTMLElement, initialDoc: string): ReedEdito
       history(),
       drawSelection(),
       EditorView.lineWrapping,
-      markdown(),
+      markdown({ extensions: [GFM] }),
       keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
       decorationsCompartment.of([]),
       fontCompartment.of(EditorView.theme({
