@@ -163,3 +163,25 @@ html, body, #app {
 .dark .reed-conflict-btn { background: rgba(255, 255, 255, 0.15); }
 .reed-conflict-btn:hover { background: rgba(255, 255, 255, 0.9); }
 .dark .reed-conflict-btn:hover { background: rgba(255, 255, 255, 0.25); }
+
+/* Preview pane typography */
+#preview-pane h1 { font-size: 1.875em; font-weight: 700; margin: 0 0 0.5em; }
+#preview-pane h2 { font-size: 1.5em; font-weight: 700; margin: 1em 0 0.5em; }
+#preview-pane h3 { font-size: 1.25em; font-weight: 600; margin: 1em 0 0.5em; }
+#preview-pane p { margin: 0 0 0.75em; line-height: 1.6; }
+#preview-pane ul, #preview-pane ol { margin: 0 0 0.75em; padding-left: 1.5em; line-height: 1.6; }
+#preview-pane li > p { margin: 0; }
+#preview-pane code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9em; background: rgba(228,228,231,0.6); padding: 0 4px; border-radius: 4px; }
+.dark #preview-pane code { background: rgba(63,63,70,0.6); }
+#preview-pane pre { background: rgb(244,244,245); padding: 12px; border-radius: 6px; overflow-x: auto; }
+.dark #preview-pane pre { background: rgb(39,39,42); }
+#preview-pane pre code { background: transparent; padding: 0; }
+#preview-pane blockquote { border-left: 3px solid rgb(212,212,216); padding-left: 12px; color: rgb(82,82,91); margin: 0 0 0.75em; }
+.dark #preview-pane blockquote { border-left-color: rgb(63,63,70); color: rgb(161,161,170); }
+#preview-pane table { border-collapse: collapse; margin: 0 0 0.75em; }
+#preview-pane th, #preview-pane td { border: 1px solid rgb(228,228,231); padding: 6px 10px; }
+.dark #preview-pane th, .dark #preview-pane td { border-color: rgb(63,63,70); }
+#preview-pane a { color: rgb(37, 99, 235); text-decoration: underline; }
+.dark #preview-pane a { color: rgb(96, 165, 250); }
+#preview-pane img { max-width: 100%; }
+.mermaid-block { margin: 0.75em 0; }

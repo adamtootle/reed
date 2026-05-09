@@ -11,6 +11,9 @@ import { createEditor, type ReedEditor } from './editor/setup';
 import { applyMode } from './editor/modes';
 import { SSEClient } from './api/sse';
 import { ConflictBanner } from './ui/conflictBanner';
+import { Splitter } from './ui/splitter';
+import { renderMarkdown } from './preview/markdown';
+import { renderMermaidBlocks } from './preview/mermaid';
 
 const store = createStore(initialAppState);
 const theme = new ThemeController();
@@ -21,6 +24,11 @@ const sidebarTitle = document.getElementById('sidebar-title') as HTMLElement;
 const sidebarTree = document.getElementById('sidebar-tree') as HTMLElement;
 const pillRoot = document.getElementById('pill') as HTMLElement;
 const editorPane = document.getElementById('editor-pane') as HTMLElement;
+const splitContainer = document.getElementById('split-container') as HTMLElement;
+const editorSide = document.getElementById('editor-side') as HTMLElement;
+const splitHandle = document.getElementById('split-handle') as HTMLElement;
+const previewSide = document.getElementById('preview-side') as HTMLElement;
+const previewPane = document.getElementById('preview-pane') as HTMLElement;
 
 const pill = new Pill(pillRoot);
 pill.onThemeChange = (t) => { theme.setOverride(t); store.set({ theme: t }); };
@@ -31,6 +39,38 @@ fileTree.onSelect = (path) => loadFile(path);
 
 let editor: ReedEditor | null = null;
 let lastMode: 'inline' | 'split' | null = null;
+
+const splitter = new Splitter({
+  container: splitContainer,
+  left: editorSide,
+  handle: splitHandle,
+  right: previewSide,
+});
+splitter.start();
+
+let lastSplitMode: 'inline' | 'split' | null = null;
+
+function syncSplitChrome(): void {
+  const s = store.get();
+  if (s.viewMode === 'split') {
+    splitHandle.classList.remove('hidden');
+    previewSide.classList.remove('hidden');
+    editorSide.style.flex = '1 1 50%';
+    previewSide.style.flex = '1 1 50%';
+  } else {
+    splitHandle.classList.add('hidden');
+    previewSide.classList.add('hidden');
+    editorSide.style.flex = '1 1 100%';
+  }
+}
+
+function renderPreview(): void {
+  const s = store.get();
+  if (s.viewMode !== 'split' || !editor) return;
+  const html = renderMarkdown(editor.getDoc());
+  previewPane.innerHTML = html;
+  void renderMermaidBlocks(previewPane);
+}
 
 async function performSave(): Promise<void> {
   const s = store.get();
@@ -58,6 +98,7 @@ function ensureEditor(): ReedEditor {
       if (s.currentFile === null) return;
       store.set({ saveState: 'unsaved' });
       saveDebouncer.trigger();
+      if (s.viewMode === 'split') renderPreview();
     },
   });
   applyMode(editor, store.get().viewMode);
@@ -95,13 +136,19 @@ store.subscribe(() => {
   renderPill();
   renderTree();
   renderShell();
+  syncSplitChrome();
   const s = store.get();
   if (editor && s.viewMode !== lastMode) {
     applyMode(editor, s.viewMode);
     lastMode = s.viewMode;
   }
+  if (s.viewMode === 'split' && lastSplitMode !== 'split') {
+    renderPreview();
+  }
+  lastSplitMode = s.viewMode;
 });
 renderPill();
+syncSplitChrome();
 
 async function loadFile(path: string): Promise<void> {
   saveDebouncer.flush();
