@@ -97,3 +97,34 @@ html, body, #app {
 .reed-status[data-color="red"]::before { background: rgb(220, 38, 38); }
 .reed-status[data-color="orange"]::before { background: rgb(234, 88, 12); }
 .reed-status[data-color="green"]::before { background: rgb(22, 163, 74); }
+
+/* Mode A markdown decorations */
+.cm-md-heading-1 { font-size: 1.6em; font-weight: 700; }
+.cm-md-heading-2 { font-size: 1.4em; font-weight: 700; }
+.cm-md-heading-3 { font-size: 1.2em; font-weight: 600; }
+.cm-md-heading-4 { font-size: 1.1em; font-weight: 600; }
+.cm-md-heading-5 { font-size: 1.05em; font-weight: 600; }
+.cm-md-heading-6 { font-size: 1em; font-weight: 600; color: rgb(82, 82, 91); }
+.cm-md-strong { font-weight: 700; }
+.cm-md-emphasis { font-style: italic; }
+.cm-md-strikethrough { text-decoration: line-through; }
+.cm-md-inline-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  background: rgba(228, 228, 231, 0.6);
+  padding: 0 3px;
+  border-radius: 3px;
+}
+.dark .cm-md-inline-code { background: rgba(63, 63, 70, 0.6); }
+.cm-md-fenced-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  background: rgba(244, 244, 245, 0.7);
+}
+.dark .cm-md-fenced-code { background: rgba(39, 39, 42, 0.7); }
+.cm-md-blockquote {
+  border-left: 3px solid rgb(212, 212, 216);
+  padding-left: 8px;
+  color: rgb(82, 82, 91);
+}
+.dark .cm-md-blockquote { border-left-color: rgb(63, 63, 70); color: rgb(161, 161, 170); }
+.cm-md-link { color: rgb(37, 99, 235); text-decoration: underline; }
+.dark .cm-md-link { color: rgb(96, 165, 250); }
