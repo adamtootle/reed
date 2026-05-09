@@ -52,4 +52,10 @@ final class GitIgnoreTests: XCTestCase {
         let gi = GitIgnore(content: "")
         XCTAssertFalse(gi.isIgnored(path: "anything.md"))
     }
+
+    func testEmbeddedSlashIsRooted() {
+        let gi = GitIgnore(content: "src/build\n")
+        XCTAssertTrue(gi.isIgnored(path: "src/build"))
+        XCTAssertFalse(gi.isIgnored(path: "a/src/build"))
+    }
 }

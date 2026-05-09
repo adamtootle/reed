@@ -40,11 +40,14 @@ struct GitIgnore {
         let isNegation = raw.hasPrefix("!")
         if isNegation { raw = String(raw.dropFirst()) }
 
-        let rooted = raw.hasPrefix("/")
-        if rooted { raw = String(raw.dropFirst()) }
+        let hasLeadingSlash = raw.hasPrefix("/")
+        if hasLeadingSlash { raw = String(raw.dropFirst()) }
 
         let directoryOnly = raw.hasSuffix("/")
         if directoryOnly { raw = String(raw.dropLast()) }
+
+        // Per gitignore spec: a slash anywhere in the pattern (other than trailing) implies rooted
+        let rooted = hasLeadingSlash || raw.contains("/")
 
         guard let regex = buildRegex(pattern: raw, rooted: rooted) else { return nil }
         return Rule(isNegation: isNegation, directoryOnly: directoryOnly, regex: regex)
