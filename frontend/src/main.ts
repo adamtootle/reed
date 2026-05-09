@@ -15,6 +15,7 @@ import { Splitter } from './ui/splitter';
 import { renderMarkdown } from './preview/markdown';
 import { renderMermaidBlocks } from './preview/mermaid';
 import { ScrollSync } from './preview/scrollSync';
+import { SidebarCollapseController } from './ui/sidebarCollapse';
 
 const store = createStore(initialAppState);
 const theme = new ThemeController();
@@ -30,6 +31,13 @@ const editorSide = document.getElementById('editor-side') as HTMLElement;
 const splitHandle = document.getElementById('split-handle') as HTMLElement;
 const previewSide = document.getElementById('preview-side') as HTMLElement;
 const previewPane = document.getElementById('preview-pane') as HTMLElement;
+
+const sidebarCollapse = new SidebarCollapseController({
+  sidebar: document.getElementById('sidebar') as HTMLElement,
+  collapseBtn: document.getElementById('sidebar-collapse') as HTMLElement,
+  expandHandle: document.getElementById('expand-handle') as HTMLElement,
+});
+sidebarCollapse.start();
 
 const pill = new Pill(pillRoot);
 pill.onThemeChange = (t) => { theme.setOverride(t); store.set({ theme: t }); };
@@ -133,12 +141,10 @@ function renderTree(): void {
 function renderShell(): void {
   const s = store.get();
   if (s.config?.mode === 'directory') {
-    sidebar.classList.remove('hidden');
-    sidebar.classList.add('flex');
+    // Sidebar starts visible; user can collapse via the chevron / Cmd+\
     sidebarTitle.textContent = '~/notes';
   } else {
     sidebar.classList.add('hidden');
-    sidebar.classList.remove('flex');
   }
 }
 
@@ -246,6 +252,8 @@ window.addEventListener('beforeunload', () => sse.stop());
     if (config.mode === 'directory') {
       const tree = await getFiles();
       store.set({ fileTree: tree });
+      sidebar.classList.remove('hidden');
+      sidebar.classList.add('flex');
       editorPane.innerHTML = `<div class="h-full flex items-center justify-center text-zinc-500">Select a file to open.</div>`;
     } else if (config.mode === 'singleFile') {
       await loadFile(config.file);
