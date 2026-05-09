@@ -7,6 +7,7 @@ import { ThemeController } from './theme/theme';
 import { Pill } from './ui/pill';
 import { FileTree } from './ui/fileTree';
 import { createEditor, type ReedEditor } from './editor/setup';
+import { applyMode } from './editor/modes';
 
 const store = createStore(initialAppState);
 const theme = new ThemeController();
@@ -26,11 +27,14 @@ const fileTree = new FileTree(sidebarTree);
 fileTree.onSelect = (path) => loadFile(path);
 
 let editor: ReedEditor | null = null;
+let lastMode: 'inline' | 'split' | null = null;
 
 function ensureEditor(): ReedEditor {
   if (editor) return editor;
   editorPane.innerHTML = '';
   editor = createEditor(editorPane, '');
+  applyMode(editor, store.get().viewMode);
+  lastMode = store.get().viewMode;
   return editor;
 }
 
@@ -60,7 +64,16 @@ function renderShell(): void {
   }
 }
 
-store.subscribe(() => { renderPill(); renderTree(); renderShell(); });
+store.subscribe(() => {
+  renderPill();
+  renderTree();
+  renderShell();
+  const s = store.get();
+  if (editor && s.viewMode !== lastMode) {
+    applyMode(editor, s.viewMode);
+    lastMode = s.viewMode;
+  }
+});
 renderPill();
 
 async function loadFile(path: string): Promise<void> {
@@ -77,6 +90,14 @@ async function loadFile(path: string): Promise<void> {
 }
 
 editorPane.innerHTML = `<div class="h-full flex items-center justify-center text-zinc-500">Loading…</div>`;
+
+window.addEventListener('keydown', (ev) => {
+  if ((ev.metaKey || ev.ctrlKey) && ev.key.toLowerCase() === 'e') {
+    ev.preventDefault();
+    const next = store.get().viewMode === 'inline' ? 'split' : 'inline';
+    store.set({ viewMode: next });
+  }
+});
 
 (async () => {
   try {
