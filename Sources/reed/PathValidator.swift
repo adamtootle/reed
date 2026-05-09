@@ -5,6 +5,9 @@ enum PathValidationError: Error, Equatable {
     case emptyPath
 }
 
+// Uses URL.standardized (pure, no disk I/O) rather than resolvingSymlinksInPath.
+// Symlinks inside the root pointing outside are not blocked here; the file tree builder
+// skips symlinks during traversal, so they cannot be discovered via /api/files.
 func validatePath(root: URL, relativePath: String) throws -> URL {
     guard !relativePath.isEmpty else { throw PathValidationError.emptyPath }
     guard !relativePath.hasPrefix("/") else { throw PathValidationError.outsideRoot }

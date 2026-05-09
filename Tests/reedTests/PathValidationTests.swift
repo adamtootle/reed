@@ -17,11 +17,15 @@ final class PathValidationTests: XCTestCase {
     }
 
     func testDoubleTraversalRejected() {
-        XCTAssertThrowsError(try validatePath(root: root, relativePath: "docs/../../etc/passwd"))
+        XCTAssertThrowsError(try validatePath(root: root, relativePath: "docs/../../etc/passwd")) { error in
+            XCTAssertEqual(error as? PathValidationError, .outsideRoot)
+        }
     }
 
     func testAbsolutePathRejected() {
-        XCTAssertThrowsError(try validatePath(root: root, relativePath: "/etc/passwd"))
+        XCTAssertThrowsError(try validatePath(root: root, relativePath: "/etc/passwd")) { error in
+            XCTAssertEqual(error as? PathValidationError, .outsideRoot)
+        }
     }
 
     func testEmptyPathRejected() {
