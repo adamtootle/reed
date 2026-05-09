@@ -887,7 +887,30 @@ router.put("/api/file") { request, _ in
 }
 ```
 
-- [ ] **Step 3: Build**
+- [ ] **Step 3: Add wildcard static file route to Server.swift**
+
+Add this route **last** inside `buildRouter()`, after the `/api/file` PUT route and before `return router`. It must be last so it only catches requests that didn't match any API route.
+
+```swift
+router.get("**") { [root] request, _ -> Response in
+    let relativePath = String(request.uri.path.dropFirst()) // strip leading /
+    guard !relativePath.isEmpty,
+          let resolved = try? validatePath(root: root, relativePath: relativePath) else {
+        return Response(status: .forbidden, headers: [:], body: .init(byteBuffer: ByteBuffer()))
+    }
+    var isDir: ObjCBool = false
+    guard FileManager.default.fileExists(atPath: resolved.path, isDirectory: &isDir),
+          !isDir.boolValue,
+          let data = try? Data(contentsOf: resolved) else {
+        return Response(status: .notFound, headers: [:], body: .init(byteBuffer: ByteBuffer()))
+    }
+    return Response(status: .ok, headers: [:], body: .init(byteBuffer: ByteBuffer(bytes: data)))
+}
+```
+
+> **Note:** In Hummingbird 2.x the catch-all pattern may be `"**"` or `"{path+}"` — check which the installed version supports. If neither compiles, read `.build/checkouts/hummingbird/` for the correct wildcard syntax.
+
+- [ ] **Step 4: Build**
 
 ```bash
 swift build
@@ -895,9 +918,9 @@ swift build
 
 Expected: compiles successfully.
 
-- [ ] **Step 4: Manual verification**
+- [ ] **Step 6: Manual verification**
 
-Run reed pointing at a directory that has `.md` files, then in another terminal:
+Run reed pointing at a directory that has `.md` files and at least one image, then in another terminal:
 
 ```bash
 PORT=<port from reed output>
@@ -917,13 +940,17 @@ curl -X PUT "http://localhost:$PORT/api/file?path=README.md" \
   -H "Content-Type: text/plain" \
   --data-binary "# Updated content"
 # Expected: HTTP 200
+
+# Wildcard: fetch an image (replace with a real file in your test directory)
+curl -o /tmp/test.png "http://localhost:$PORT/image.png"
+# Expected: file bytes returned, same size as the source file
 ```
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add Sources/reed/FileAPI.swift Sources/reed/Server.swift
-git commit -m "feat: add /api/files and /api/file routes (slices 2 and 3)"
+git commit -m "feat: add /api/files, /api/file, and wildcard static file routes (slices 2 and 3)"
 ```
 
 ---
@@ -1212,6 +1239,7 @@ git commit -m "feat: file watcher and SSE push for external changes (slice 4)"
 - [x] GET /api/files → JSON tree — Task 6
 - [x] GET /api/file?path= → text/plain — Task 6
 - [x] PUT /api/file?path= → write (file must exist) — Task 6
+- [x] GET /** → serve arbitrary files from root (images, etc.) with path traversal protection — Task 6
 - [x] GET /events → SSE stream, text/event-stream, no-cache — Task 7
 - [x] SSEBroadcaster actor for thread safety — Task 7
 - [x] FileWatcher DispatchSource .write events — Task 8

@@ -167,6 +167,23 @@ guard resolved.path.hasPrefix(root) else {
 
 ---
 
+## Wildcard static file route
+
+`GET /*` — catch-all route that serves any file under the root path directly from disk. Registered last so it only handles requests that don't match `/`, `/api/*`, or `/events`.
+
+**Purpose:** enables relative asset references in markdown (e.g. `![](./image.png)`) to resolve correctly in split-pane preview. The browser issues a GET for the image path as-is; the wildcard route resolves it against the root and returns the file bytes.
+
+**Implementation:**
+
+1. Strip the leading `/` from the request URI path to get a relative path string.
+2. Run the same `validatePath(root:relativePath:)` check used by `/api/file` — return 403 on traversal attempts.
+3. Read the file with `Data(contentsOf:)` — return 404 if not found.
+4. Respond `200` with the raw bytes. Content-type header is omitted; browsers infer it from file bytes for images, which is sufficient for this use case.
+
+No directory listing: if the path resolves to a directory, return 404.
+
+---
+
 ## Slice 4 — FileWatcher + SSE
 
 ### FileWatcher (`FileWatcher.swift`)
