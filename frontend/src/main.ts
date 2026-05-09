@@ -106,6 +106,19 @@ async function performSave(): Promise<void> {
   }
 }
 
+function flushPendingSave(unload = false): void {
+  if (!saveDebouncer.isPending()) return;
+  saveDebouncer.cancel();
+  const s = store.get();
+  if (!s.currentFile || !editor) return;
+  if (unload) {
+    // Best-effort fire-and-forget; keepalive lets the request survive page teardown
+    putFile(s.currentFile, editor.getDoc(), { unload: true }).catch(() => {});
+  } else {
+    void performSave();
+  }
+}
+
 const saveDebouncer = createDebouncer(performSave, 750);
 
 function ensureEditor(): ReedEditor {
@@ -144,7 +157,7 @@ function renderShell(): void {
   const s = store.get();
   if (s.config?.mode === 'directory') {
     // Sidebar starts visible; user can collapse via the chevron / Cmd+\
-    sidebarTitle.textContent = '~/notes';
+    sidebarTitle.textContent = s.config.rootName;
   } else {
     sidebar.classList.add('hidden');
   }
@@ -179,12 +192,45 @@ function treeIsEmpty(nodes: FileNode[]): boolean {
   return !visit(nodes);
 }
 
+async function reconcileFile(path: string): Promise<void> {
+  const s = store.get();
+  if (s.currentFile !== path || !editor) return;
+  let disk: string;
+  try {
+    disk = await getFile(path);
+  } catch (e) {
+    console.error('refetch on change failed', e);
+    return;
+  }
+  if (disk === editor.getDoc()) return;
+  const isClean = !saveDebouncer.isPending() && s.saveState === 'saved' && editor.getDoc() === s.loadedContent;
+  if (isClean) {
+    editor.setDoc(disk);
+    saveDebouncer.cancel();  // fix from Issue 1: prevent bogus save after programmatic setDoc
+    store.set({ loadedContent: disk });
+  } else {
+    store.set({ conflict: { diskContent: disk } });
+    conflictBanner.show();
+  }
+}
+
+async function refreshTreeIfDirectory(): Promise<void> {
+  if (store.get().config?.mode !== 'directory') return;
+  try {
+    const tree = await getFiles();
+    store.set({ fileTree: tree });
+  } catch (e) {
+    console.error('tree refresh failed', e);
+  }
+}
+
 async function loadFile(path: string): Promise<void> {
-  saveDebouncer.flush();
+  flushPendingSave(false);
   try {
     const content = await getFile(path);
     const ed = ensureEditor();
     ed.setDoc(content);
+    saveDebouncer.cancel();  // fix from Issue 1: prevent bogus save after programmatic setDoc
     store.set({ currentFile: path, loadedContent: content, saveState: 'saved' });
   } catch (err) {
     console.error('loadFile failed', err);
@@ -203,16 +249,15 @@ window.addEventListener('keydown', (ev) => {
   }
 });
 
-window.addEventListener('blur', () => saveDebouncer.flush());
-window.addEventListener('beforeunload', () => {
-  if (saveDebouncer.isPending()) saveDebouncer.flush();
-});
+window.addEventListener('blur', () => flushPendingSave(false));
+window.addEventListener('beforeunload', () => flushPendingSave(true));
 
 const conflictBanner = new ConflictBanner(document.getElementById('conflict-banner') as HTMLElement);
 conflictBanner.onReload = () => {
   const s = store.get();
   if (s.conflict && editor) {
     editor.setDoc(s.conflict.diskContent);
+    saveDebouncer.cancel();  // fix from Issue 1: prevent bogus save after programmatic setDoc
     store.set({ loadedContent: s.conflict.diskContent, conflict: null, saveState: 'saved' });
     conflictBanner.hide();
   }
@@ -223,37 +268,16 @@ conflictBanner.onKeep = () => {
 };
 
 const sse = new SSEClient();
-sse.onConnect = () => store.set({ sseConnected: true });
+sse.onConnect = async () => {
+  store.set({ sseConnected: true });
+  await refreshTreeIfDirectory();
+  const cur = store.get().currentFile;
+  if (cur) await reconcileFile(cur);
+};
 sse.onDisconnect = () => store.set({ sseConnected: false });
 sse.onFileChanged = async (path: string) => {
-  // Always refresh the tree
-  if (store.get().config?.mode === 'directory') {
-    try {
-      const tree = await getFiles();
-      store.set({ fileTree: tree });
-    } catch (e) {
-      console.error('tree refresh failed', e);
-    }
-  }
-  // If the changed file is the currently-open one, fetch and reconcile
-  const s = store.get();
-  if (s.currentFile !== path || !editor) return;
-  let disk: string;
-  try {
-    disk = await getFile(path);
-  } catch (e) {
-    console.error('refetch on change failed', e);
-    return;
-  }
-  if (disk === editor.getDoc()) return; // self-write echo or otherwise no diff
-  const isClean = !saveDebouncer.isPending() && s.saveState === 'saved' && editor.getDoc() === s.loadedContent;
-  if (isClean) {
-    editor.setDoc(disk);
-    store.set({ loadedContent: disk });
-  } else {
-    store.set({ conflict: { diskContent: disk } });
-    conflictBanner.show();
-  }
+  await refreshTreeIfDirectory();
+  await reconcileFile(path);
 };
 sse.start();
 window.addEventListener('beforeunload', () => sse.stop());

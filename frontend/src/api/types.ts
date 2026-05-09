@@ -1,6 +1,6 @@
 export type LaunchMode =
-  | { mode: 'directory' }
-  | { mode: 'singleFile'; file: string };
+  | { mode: 'directory'; rootName: string }
+  | { mode: 'singleFile'; file: string; rootName: string };
 
 export type FileNodeType = 'file' | 'directory' | 'cap';
 

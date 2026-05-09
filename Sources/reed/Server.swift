@@ -43,8 +43,8 @@ struct ReedServer {
             serveResource(name: "index", extension: "html", contentType: "text/html; charset=utf-8")
         }
 
-        router.get("/api/config") { [mode] _, _ -> Response in
-            var obj: [String: String] = [:]
+        router.get("/api/config") { [mode, root] _, _ -> Response in
+            var obj: [String: String] = ["rootName": root.lastPathComponent]
             switch mode {
             case .directory:
                 obj["mode"] = "directory"

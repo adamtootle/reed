@@ -19,13 +19,17 @@ export async function getFile(path: string): Promise<string> {
   return res.text();
 }
 
-export async function putFile(path: string, content: string): Promise<void> {
+export interface PutFileOptions {
+  unload?: boolean;
+}
+
+export async function putFile(path: string, content: string, opts: PutFileOptions = {}): Promise<void> {
   const url = `/api/file?path=${encodeURIComponent(path)}`;
   const res = await fetch(url, {
     method: 'PUT',
     headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     body: content,
-    keepalive: true, // lets the save complete even if the tab is closed mid-request; 64KB body cap
+    keepalive: opts.unload === true, // 64KB body cap on unload-flush; off otherwise so >64KB docs save reliably
   });
   if (!res.ok) throw new Error(`putFile failed: ${res.status}`);
 }

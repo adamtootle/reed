@@ -9,20 +9,20 @@ describe('api/client', () => {
   it('getConfig parses the directory mode response', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ mode: 'directory' }),
+      json: async () => ({ mode: 'directory', rootName: 'notes' }),
     }));
     const config = await getConfig();
-    expect(config).toEqual({ mode: 'directory' });
+    expect(config).toEqual({ mode: 'directory', rootName: 'notes' });
     expect(fetch).toHaveBeenCalledWith('/api/config');
   });
 
   it('getConfig parses the singleFile mode response', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ mode: 'singleFile', file: 'notes.md' }),
+      json: async () => ({ mode: 'singleFile', file: 'notes.md', rootName: 'notes' }),
     }));
     const config = await getConfig();
-    expect(config).toEqual({ mode: 'singleFile', file: 'notes.md' });
+    expect(config).toEqual({ mode: 'singleFile', file: 'notes.md', rootName: 'notes' });
   });
 
   it('getFiles returns the tree', async () => {
@@ -63,6 +63,20 @@ describe('api/client', () => {
       body: 'hello',
       headers: expect.objectContaining({ 'Content-Type': 'text/plain; charset=utf-8' }),
     }));
+  });
+
+  it('putFile does not set keepalive by default', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
+    await putFile('readme.md', 'hello');
+    const [, opts] = (fetch as ReturnType<typeof vi.fn>).mock.calls[0] as [string, RequestInit];
+    expect(opts.keepalive).toBe(false);
+  });
+
+  it('putFile sets keepalive when unload option is true', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
+    await putFile('readme.md', 'hello', { unload: true });
+    const [, opts] = (fetch as ReturnType<typeof vi.fn>).mock.calls[0] as [string, RequestInit];
+    expect(opts.keepalive).toBe(true);
   });
 
   it('putFile rejects on non-2xx', async () => {
