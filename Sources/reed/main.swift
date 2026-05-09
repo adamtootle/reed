@@ -1,5 +1,4 @@
 import ArgumentParser
-import AppKit
 import Darwin
 import Foundation
 
@@ -23,7 +22,6 @@ struct Reed: ParsableCommand {
         let server = ReedServer(root: root, mode: mode, port: port)
 
         print("Listening on http://localhost:\(port)")
-        NSWorkspace.shared.open(URL(string: "http://localhost:\(port)")!)
 
         Task {
             do {

@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Hummingbird
 
@@ -8,11 +9,15 @@ struct ReedServer {
 
     func run() async throws {
         let router = buildRouter()
+        let url = URL(string: "http://localhost:\(port)")!
         let app = Application(
             router: router,
             configuration: ApplicationConfiguration(
                 address: .hostname("localhost", port: Int(port))
-            )
+            ),
+            onServerRunning: { _ in
+                NSWorkspace.shared.open(url)
+            }
         )
         try await app.runService()
     }
@@ -22,6 +27,41 @@ struct ReedServer {
 
         router.get("/") { _, _ -> Response in
             serveResource(name: "index", extension: "html", contentType: "text/html; charset=utf-8")
+        }
+
+        let fileAPI = FileAPI(root: root)
+
+        router.get("/api/files") { _, _ in
+            fileAPI.listFiles()
+        }
+
+        router.get("/api/file") { request, _ in
+            let path = request.uri.queryParameters.get("path") ?? ""
+            return fileAPI.readFile(relativePath: path)
+        }
+
+        router.put("/api/file") { request, _ in
+            let bodyBuffer = try await request.body.collect(upTo: 50 * 1024 * 1024)
+            let content = String(bytes: bodyBuffer.readableBytesView, encoding: .utf8) ?? ""
+            let path = request.uri.queryParameters.get("path") ?? ""
+            return fileAPI.writeFile(relativePath: path, content: content)
+        }
+
+        // Wildcard: serve arbitrary files from root (images, etc. for markdown preview).
+        // Registered last so it only catches requests not matched by the routes above.
+        router.get("/**") { [root] request, _ -> Response in
+            let relativePath = String(request.uri.path.dropFirst()) // strip leading /
+            guard !relativePath.isEmpty,
+                  let resolved = try? validatePath(root: root, relativePath: relativePath) else {
+                return Response(status: .forbidden, headers: [:], body: ResponseBody(byteBuffer: ByteBuffer()))
+            }
+            var isDir: ObjCBool = false
+            guard FileManager.default.fileExists(atPath: resolved.path, isDirectory: &isDir),
+                  !isDir.boolValue,
+                  let data = try? Data(contentsOf: resolved) else {
+                return Response(status: .notFound, headers: [:], body: ResponseBody(byteBuffer: ByteBuffer()))
+            }
+            return Response(status: .ok, headers: [:], body: ResponseBody(byteBuffer: ByteBuffer(bytes: data)))
         }
 
         return router
