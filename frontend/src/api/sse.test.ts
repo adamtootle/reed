@@ -102,4 +102,11 @@ describe('SSEClient', () => {
     vi.advanceTimersByTime(60000);
     expect(FakeEventSource.instances).toHaveLength(1);
   });
+
+  it('start() called twice does not open a second EventSource', () => {
+    const c = new SSEClient();
+    c.start();
+    c.start();
+    expect(FakeEventSource.instances).toHaveLength(1);
+  });
 });

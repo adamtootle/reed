@@ -17,6 +17,7 @@ export class SSEClient {
   private stopped = false;
 
   start(): void {
+    if (this.source !== null || this.reconnectTimer !== null) return;
     this.stopped = false;
     this.open();
   }
@@ -46,7 +47,7 @@ export class SSEClient {
         const data = JSON.parse((ev as MessageEvent).data) as { path: string };
         this.onFileChanged?.(data.path);
       } catch {
-        // ignore malformed payloads
+        console.warn('[SSEClient] malformed fileChanged payload', (ev as MessageEvent).data);
       }
     });
   }
