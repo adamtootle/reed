@@ -42,6 +42,8 @@ final class PortResolutionTests: XCTestCase {
         }
         XCTAssertEqual(bindResult, 0)
 
-        XCTAssertThrowsError(try resolvePort(requested: probe))
+        XCTAssertThrowsError(try resolvePort(requested: probe)) { error in
+            XCTAssertTrue(error is PortInUseError, "expected PortInUseError, got \(type(of: error))")
+        }
     }
 }

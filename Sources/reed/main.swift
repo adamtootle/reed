@@ -81,6 +81,13 @@ struct PortInUseError: Error, CustomStringConvertible {
     var description: String { "port \(port) is already in use" }
 }
 
+/// Validates that `requested` (or the build-default if nil) can be bound,
+/// and returns the resolved port.
+///
+/// Note: probes the port by binding-then-closing a temp socket. There is a small
+/// TOCTOU window where another process could claim the port between the probe and
+/// the real server bind. Accepted because reed runs locally for a single user;
+/// the consequence is at worst a confusing error at server startup.
 func resolvePort(requested: UInt16?) throws -> UInt16 {
     let candidate = requested ?? defaultPort()
     if candidate == 0 {
@@ -89,9 +96,6 @@ func resolvePort(requested: UInt16?) throws -> UInt16 {
     let sock = Darwin.socket(AF_INET, SOCK_STREAM, 0)
     precondition(sock >= 0, "socket() failed")
     defer { Darwin.close(sock) }
-
-    var reuse: Int32 = 1
-    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &reuse, socklen_t(MemoryLayout<Int32>.size))
 
     var addr = sockaddr_in()
     addr.sin_family = sa_family_t(AF_INET)
