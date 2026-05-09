@@ -16,6 +16,8 @@ import { renderMarkdown } from './preview/markdown';
 import { renderMermaidBlocks } from './preview/mermaid';
 import { ScrollSync } from './preview/scrollSync';
 import { SidebarCollapseController } from './ui/sidebarCollapse';
+import { renderEmptyState } from './ui/emptyState';
+import type { FileNode } from './api/types';
 
 const store = createStore(initialAppState);
 const theme = new ThemeController();
@@ -166,6 +168,17 @@ store.subscribe(() => {
 renderPill();
 syncSplitChrome();
 
+function treeIsEmpty(nodes: FileNode[]): boolean {
+  const visit = (arr: FileNode[]): boolean => {
+    for (const n of arr) {
+      if (n.type === 'file') return true;
+      if (n.type === 'directory' && n.children && visit(n.children)) return true;
+    }
+    return false;
+  };
+  return !visit(nodes);
+}
+
 async function loadFile(path: string): Promise<void> {
   saveDebouncer.flush();
   try {
@@ -175,7 +188,7 @@ async function loadFile(path: string): Promise<void> {
     store.set({ currentFile: path, loadedContent: content, saveState: 'saved' });
   } catch (err) {
     console.error('loadFile failed', err);
-    editorPane.innerHTML = `<div class="h-full flex items-center justify-center text-zinc-500">File no longer exists.</div>`;
+    renderEmptyState(editorPane, { kind: 'file-deleted' });
     store.set({ currentFile: null, loadedContent: null });
   }
 }
@@ -254,12 +267,16 @@ window.addEventListener('beforeunload', () => sse.stop());
       store.set({ fileTree: tree });
       sidebar.classList.remove('hidden');
       sidebar.classList.add('flex');
-      editorPane.innerHTML = `<div class="h-full flex items-center justify-center text-zinc-500">Select a file to open.</div>`;
+      if (treeIsEmpty(tree)) {
+        renderEmptyState(editorPane, { kind: 'no-markdown' });
+      } else {
+        renderEmptyState(editorPane, { kind: 'select-file' });
+      }
     } else if (config.mode === 'singleFile') {
       await loadFile(config.file);
     }
   } catch (err) {
-    editorPane.innerHTML = `<div class="h-full flex items-center justify-center text-zinc-500">Connection lost — refresh the page when reed is running again.</div>`;
+    renderEmptyState(editorPane, { kind: 'connection-lost' });
     console.error(err);
   }
 })();
