@@ -1,6 +1,21 @@
 import ArgumentParser
 import Darwin
+import Dispatch
 import Foundation
+
+enum SignalHandling {
+    // Retained for the lifetime of the process so the dispatch sources keep firing.
+    nonisolated(unsafe) private static var sources: [DispatchSourceSignal] = []
+
+    static func installForceExit() {
+        for sig in [SIGINT, SIGTERM] {
+            let src = DispatchSource.makeSignalSource(signal: sig, queue: .global())
+            src.setEventHandler { Darwin._exit(0) }
+            src.resume()
+            sources.append(src)
+        }
+    }
+}
 
 enum LaunchMode: Sendable {
     case directory
@@ -20,6 +35,15 @@ struct Reed: ParsableCommand {
     var port: UInt16?
 
     mutating func run() throws {
+        // Hummingbird's graceful shutdown waits for in-flight responses to drain,
+        // and the long-lived SSE connection at /events never does — so Ctrl+C
+        // gets stuck once a browser is connected. Install dispatch-source signal
+        // handlers (which observe signal delivery via kqueue and coexist with
+        // whatever signal handlers Hummingbird/Service Lifecycle install) so that
+        // SIGINT/SIGTERM unconditionally force-exit the process.
+        // Safe: file writes are atomic, no in-flight server-side state to flush.
+        SignalHandling.installForceExit()
+
         let (root, mode) = try resolveInput(path: path)
         let resolvedPort: UInt16
         do {
