@@ -3,6 +3,7 @@ import { EditorView, keymap, drawSelection } from '@codemirror/view';
 import { history, historyKeymap, defaultKeymap, indentWithTab } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
 import { GFM } from '@lezer/markdown';
+import { markdownShortcuts } from './markdownKeymap';
 
 export interface ReedEditor {
   view: EditorView;
@@ -33,7 +34,7 @@ export function createEditor(parent: HTMLElement, opts: CreateEditorOptions): Re
       drawSelection(),
       EditorView.lineWrapping,
       markdown({ extensions: [GFM] }),
-      keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
+      keymap.of([...markdownShortcuts, ...defaultKeymap, ...historyKeymap, indentWithTab]),
       decorationsCompartment.of([]),
       fontCompartment.of(EditorView.theme({
         '&': { fontFamily: 'ui-sans-serif, system-ui, sans-serif', fontSize: '15px' },
