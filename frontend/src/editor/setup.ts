@@ -39,6 +39,12 @@ export function createEditor(parent: HTMLElement, opts: CreateEditorOptions): Re
       fontCompartment.of(EditorView.theme({
         '&': { fontFamily: 'ui-sans-serif, system-ui, sans-serif', fontSize: '15px' },
       })),
+      // CM6 doesn't enable vertical scroll by default — need both an explicit
+      // editor height and overflow on the scroller.
+      EditorView.theme({
+        '&': { height: '100%' },
+        '.cm-scroller': { overflow: 'auto' },
+      }),
       updateListener,
     ],
   });

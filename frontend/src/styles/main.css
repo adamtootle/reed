@@ -9,6 +9,12 @@ html, body, #app {
     "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
+/* Tell the browser which scheme to use for native scrollbars / form controls. */
+:root { color-scheme: light; }
+.dark { color-scheme: dark; }
+
+.dark body { background: #222226; color: rgb(205, 210, 216); }
+
 /* Pill (floating control cluster) */
 .reed-pill {
   position: absolute;
@@ -100,7 +106,7 @@ html, body, #app {
 
 /* CodeMirror cursor + selection (GH palette) — !important to beat CM's injected theme */
 .cm-editor .cm-content { caret-color: rgb(31, 35, 40) !important; color: rgb(31, 35, 40); }
-.dark .cm-editor .cm-content { caret-color: rgb(230, 237, 243) !important; color: rgb(230, 237, 243); }
+.dark .cm-editor .cm-content { caret-color: rgb(205, 210, 216) !important; color: rgb(205, 210, 216); }
 .cm-editor .cm-cursor,
 .cm-editor .cm-dropCursor { border-left-color: rgb(31, 35, 40) !important; }
 .dark .cm-editor .cm-cursor,
@@ -113,6 +119,15 @@ html, body, #app {
 .dark .cm-editor ::selection { background: rgba(56, 139, 253, 0.35) !important; }
 .cm-editor .cm-activeLine { background-color: transparent; }
 .cm-editor .cm-gutters { background: transparent; border-right: none; }
+
+/* Centered column with breathing room. Centering goes on `.cm-scroller`'s flex
+ * `justify-content` rather than `margin: 0 auto` on `.cm-content` — auto margins
+ * on a flex item interfere with CodeMirror's vertical scroll height plumbing. */
+.cm-editor .cm-scroller { justify-content: center; }
+.cm-editor .cm-content {
+  padding: 32px;
+  max-width: 70ch;
+}
 
 /* Mode A markdown decorations — GH-style */
 .cm-md-heading-1 { font-size: 1.6em; font-weight: 700; }
@@ -200,8 +215,11 @@ html, body, #app {
 #preview-pane {
   color: rgb(31, 35, 40);
   line-height: 1.6;
+  max-width: 70ch;
+  margin: 0 auto;
+  padding: 32px;
 }
-.dark #preview-pane { color: rgb(230, 237, 243); }
+.dark #preview-pane { color: rgb(205, 210, 216); }
 #preview-pane h1 {
   font-size: 1.875em;
   font-weight: 700;
