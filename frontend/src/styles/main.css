@@ -262,7 +262,11 @@ html, body, #app {
   line-height: 1.45;
 }
 .dark #preview-pane pre { background: rgb(22, 27, 34); }
-#preview-pane pre code { background: transparent; padding: 0; font-size: inherit; }
+/* Reset for both schemes — `.dark #preview-pane code` would otherwise outweigh
+ * a bare `#preview-pane pre code` selector and bleed inline-code bg through
+ * the fenced block, giving each line its own translucent rectangle. */
+#preview-pane pre code,
+.dark #preview-pane pre code { background: transparent; padding: 0; font-size: inherit; }
 #preview-pane blockquote {
   border-left: 3px solid rgb(208, 215, 222);
   padding-left: 12px;
