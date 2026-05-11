@@ -82,4 +82,43 @@ final class FileTreeTests: XCTestCase {
         XCTAssertTrue(result.cappedAt200)
         XCTAssertEqual(result.nodes.count, 200)
     }
+
+    private func writeGitignore(_ relativeDir: String, _ content: String) {
+        let dirURL = relativeDir.isEmpty ? tempDir! : tempDir.appendingPathComponent(relativeDir)
+        try! FileManager.default.createDirectory(at: dirURL, withIntermediateDirectories: true)
+        try! content.write(
+            to: dirURL.appendingPathComponent(".gitignore"), atomically: true, encoding: .utf8)
+    }
+
+    func testNestedGitignoreIgnoresWithinSubdirectory() {
+        writeGitignore("frontend", "node_modules\n")
+        makeFile("frontend/src/app.md")
+        makeFile("frontend/node_modules/foo.md")
+        makeFile("frontend/node_modules/sub/bar.md")
+        let tree = buildFileTree(root: tempDir, gitIgnore: GitIgnore(content: ""))
+        let files = flatten(tree).filter { $0.type == .file }
+        XCTAssertTrue(files.contains { $0.name == "app.md" })
+        XCTAssertFalse(files.contains { $0.name == "foo.md" })
+        XCTAssertFalse(files.contains { $0.name == "bar.md" })
+    }
+
+    func testNestedGitignoreOnlyAffectsItsSubtree() {
+        writeGitignore("frontend", "node_modules\n")
+        makeFile("frontend/node_modules/inner.md")
+        makeFile("node_modules/outer.md")  // not under frontend — frontend's rule does not apply
+        let tree = buildFileTree(root: tempDir, gitIgnore: GitIgnore(content: ""))
+        let files = flatten(tree).filter { $0.type == .file }
+        XCTAssertTrue(files.contains { $0.name == "outer.md" })
+        XCTAssertFalse(files.contains { $0.name == "inner.md" })
+    }
+
+    func testNestedGitignoreNegatesRootIgnore() {
+        writeGitignore("sub", "!keep.md\n")
+        makeFile("sub/keep.md")
+        makeFile("sub/skip.md")
+        let tree = buildFileTree(root: tempDir, gitIgnore: GitIgnore(content: "*.md\n"))
+        let files = flatten(tree).filter { $0.type == .file }
+        XCTAssertTrue(files.contains { $0.name == "keep.md" })
+        XCTAssertFalse(files.contains { $0.name == "skip.md" })
+    }
 }
