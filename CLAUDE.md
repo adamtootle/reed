@@ -83,3 +83,8 @@ The Lezer markdown parser used in the editor **must** be configured with the sam
 - Backend: XCTest under `Tests/reedTests/`. Run with `swift test`.
 - Frontend: Vitest with **happy-dom** (not jsdom — happy-dom 20+ to avoid CVEs in older releases). Tests live next to source as `*.test.ts`.
 - KaTeX dependency: `@vscode/markdown-it-katex` is intentionally used instead of the original `markdown-it-katex` (which has an unpatched XSS).
+
+## Specs and plans
+**Specs are living docs, not dated snapshots.** Save specs to `docs/specs/<topic>.md` (no date prefix) and edit them in place as the system evolves — they are the canonical source of truth for design decisions. Do not create new dated files for revisions; update the existing topic file. This overrides the default `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` convention from the brainstorming skill.
+
+Plans keep dates: save to `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`. Plans are point-in-time execution artifacts (one plan per implementation push) and may legitimately repeat against the same spec years apart.
