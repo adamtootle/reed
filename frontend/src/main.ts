@@ -144,7 +144,7 @@ function renderPill(): void {
   pill.update({
     theme: s.theme,
     viewMode: s.viewMode,
-    status: computePillState(s.saveState, s.sseConnected),
+    status: computePillState(s.saveState, s.sseStatus, s.currentFile !== null),
   });
 }
 
@@ -269,12 +269,16 @@ conflictBanner.onKeep = () => {
 
 const sse = new SSEClient();
 sse.onConnect = async () => {
-  store.set({ sseConnected: true });
+  store.set({ sseStatus: 'connected' });
   await refreshTreeIfDirectory();
   const cur = store.get().currentFile;
   if (cur) await reconcileFile(cur);
 };
-sse.onDisconnect = () => store.set({ sseConnected: false });
+sse.onDisconnect = () => {
+  // Stay in 'connecting' if we never successfully connected; otherwise show 'reconnecting'.
+  const cur = store.get().sseStatus;
+  if (cur === 'connected') store.set({ sseStatus: 'reconnecting' });
+};
 sse.onFileChanged = async (path: string) => {
   await refreshTreeIfDirectory();
   await reconcileFile(path);

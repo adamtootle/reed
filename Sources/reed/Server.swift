@@ -85,6 +85,11 @@ struct ReedServer {
                 Task { await broadcaster.remove(id: id) }
             }
             await broadcaster.add(id: id, continuation: continuation)
+            // Prime the stream so headers + first byte flush right away. Without this the
+            // client's EventSource.onopen does not fire until the first real event, which
+            // leaves the UI stuck in "Connecting…" / "Reconnecting…" until the first file
+            // change. `:` introduces an SSE comment line (a no-op for the parser).
+            continuation.yield(ByteBuffer(string: ":\n\n"))
 
             var headers = HTTPFields()
             headers[.contentType] = "text/event-stream"

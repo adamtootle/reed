@@ -3,6 +3,7 @@ import type { LaunchMode, FileNode } from '../api/types';
 export type ViewMode = 'inline' | 'split';
 export type ThemeOverride = 'auto' | 'light' | 'dark';
 export type SaveState = 'saved' | 'unsaved' | 'saving' | 'saveFailed';
+export type SSEStatus = 'connecting' | 'connected' | 'reconnecting';
 
 export interface ConflictState {
   diskContent: string;
@@ -16,7 +17,7 @@ export interface AppState {
   viewMode: ViewMode;
   theme: ThemeOverride;
   saveState: SaveState;
-  sseConnected: boolean;
+  sseStatus: SSEStatus;
   conflict: ConflictState | null;
   sidebarCollapsed: boolean;
 }
@@ -29,7 +30,7 @@ export const initialAppState: AppState = {
   viewMode: 'inline',
   theme: 'auto',
   saveState: 'saved',
-  sseConnected: false,
+  sseStatus: 'connecting',
   conflict: null,
   sidebarCollapsed: false,
 };
