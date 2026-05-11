@@ -19,6 +19,13 @@ struct FileTreeResult {
     let cappedAt200: Bool
 }
 
+private struct ScopedGitIgnore {
+    /// Relative path from the tree root to the directory containing this `.gitignore`.
+    /// Empty string for the root scope.
+    let anchor: String
+    let gitIgnore: GitIgnore
+}
+
 func buildFileTree(root: URL, gitIgnore: GitIgnore) -> [FileNode] {
     buildFileTreeResult(root: root, gitIgnore: gitIgnore).nodes
 }
@@ -27,8 +34,19 @@ func buildFileTreeResult(root: URL, gitIgnore: GitIgnore) -> FileTreeResult {
     var fileCount = 0
     var capped = false
 
-    func traverse(directory: URL, relativePath: String, depth: Int) -> [FileNode] {
+    func traverse(directory: URL, relativePath: String, depth: Int, scopes: [ScopedGitIgnore]) -> [FileNode] {
         guard depth <= 5, !capped else { return [] }
+
+        // Pick up a nested `.gitignore` in this directory. Skip the root because the caller
+        // already supplied it as the initial scope.
+        var effectiveScopes = scopes
+        if !relativePath.isEmpty {
+            let nestedURL = directory.appendingPathComponent(".gitignore")
+            if let content = try? String(contentsOf: nestedURL, encoding: .utf8) {
+                effectiveScopes.append(
+                    ScopedGitIgnore(anchor: relativePath, gitIgnore: GitIgnore(content: content)))
+            }
+        }
 
         let contents: [URL]
         do {
@@ -53,10 +71,11 @@ func buildFileTreeResult(root: URL, gitIgnore: GitIgnore) -> FileTreeResult {
 
             let isDir = rv?.isDirectory == true
 
-            if gitIgnore.isIgnored(path: itemPath, isDirectory: isDir) { continue }
+            if isIgnored(itemPath: itemPath, isDirectory: isDir, scopes: effectiveScopes) { continue }
 
             if isDir {
-                let children = traverse(directory: url, relativePath: itemPath, depth: depth + 1)
+                let children = traverse(
+                    directory: url, relativePath: itemPath, depth: depth + 1, scopes: effectiveScopes)
                 if !children.isEmpty {
                     nodes.append(FileNode(name: name, path: itemPath, type: .directory, children: children))
                 }
@@ -70,6 +89,24 @@ func buildFileTreeResult(root: URL, gitIgnore: GitIgnore) -> FileTreeResult {
         return nodes
     }
 
-    let nodes = traverse(directory: root, relativePath: "", depth: 1)
+    let rootScopes = [ScopedGitIgnore(anchor: "", gitIgnore: gitIgnore)]
+    let nodes = traverse(directory: root, relativePath: "", depth: 1, scopes: rootScopes)
     return FileTreeResult(nodes: nodes, cappedAt200: capped)
+}
+
+/// Cascade scopes from outermost to innermost; the deepest matching decision wins.
+private func isIgnored(itemPath: String, isDirectory: Bool, scopes: [ScopedGitIgnore]) -> Bool {
+    var ignored = false
+    for scope in scopes {
+        let relative: String
+        if scope.anchor.isEmpty {
+            relative = itemPath
+        } else {
+            relative = String(itemPath.dropFirst(scope.anchor.count + 1))
+        }
+        if let d = scope.gitIgnore.decision(path: relative, isDirectory: isDirectory) {
+            ignored = d
+        }
+    }
+    return ignored
 }

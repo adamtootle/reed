@@ -22,15 +22,22 @@ struct GitIgnore {
     }
 
     func isIgnored(path: String, isDirectory: Bool = false) -> Bool {
-        var ignored = false
+        decision(path: path, isDirectory: isDirectory) ?? false
+    }
+
+    /// Returns the last matching rule's decision (`true` = ignored, `false` = explicitly un-ignored),
+    /// or `nil` if no rule in this file matched. Callers cascading multiple gitignore scopes use the
+    /// deepest non-nil decision as the final answer.
+    func decision(path: String, isDirectory: Bool = false) -> Bool? {
+        var result: Bool? = nil
         for rule in rules {
             if rule.directoryOnly && !isDirectory { continue }
             let range = NSRange(path.startIndex..., in: path)
             if rule.regex.firstMatch(in: path, range: range) != nil {
-                ignored = !rule.isNegation
+                result = !rule.isNegation
             }
         }
-        return ignored
+        return result
     }
 
     private static func parseRule(line: String) -> Rule? {
