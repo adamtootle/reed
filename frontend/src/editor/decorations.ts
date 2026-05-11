@@ -29,6 +29,19 @@ function buildDecorations(view: EditorView): DecorationSet {
       from,
       to,
       enter(node) {
+        // FencedCode is decorated per-line (Decoration.line) so the bg covers
+        // each .cm-line in full width. An inline mark would only color the text
+        // rectangle on each line, leaving body-bg strips at line ends.
+        if (node.name === 'FencedCode') {
+          const doc = view.state.doc;
+          const startLine = doc.lineAt(node.from).number;
+          const endLine = doc.lineAt(Math.min(node.to, doc.length)).number;
+          for (let i = startLine; i <= endLine; i++) {
+            const line = doc.line(i);
+            builder.add(line.from, line.from, Decoration.line({ class: 'cm-md-fenced-code' }));
+          }
+          return;
+        }
         const className = NODE_TO_CLASS[node.name];
         if (className) {
           builder.add(node.from, node.to, Decoration.mark({ class: className }));
