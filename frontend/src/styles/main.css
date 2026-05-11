@@ -126,7 +126,9 @@ html, body, #app {
  * on a flex item interfere with CodeMirror's vertical scroll height plumbing. */
 .cm-editor .cm-scroller { justify-content: center; }
 .cm-editor .cm-content {
-  padding: 32px;
+  /* Top padding clears the absolutely-positioned `.reed-pill` (top: 14px, ~25px tall)
+   * so long first lines don't slide under it. */
+  padding: 56px 32px 32px;
   max-width: 70ch;
 }
 
@@ -218,7 +220,8 @@ html, body, #app {
   line-height: 1.6;
   max-width: 70ch;
   margin: 0 auto;
-  padding: 32px;
+  /* Top padding clears the pill (see `.cm-content`). */
+  padding: 56px 32px 32px;
 }
 .dark #preview-pane { color: rgb(205, 210, 216); }
 #preview-pane h1 {
