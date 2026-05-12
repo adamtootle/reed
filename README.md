@@ -62,4 +62,4 @@ swift build -c release
 - **Backend** — Swift 6.2, [Hummingbird](https://github.com/hummingbird-project/hummingbird) 2, ArgumentParser. Serves `/api/config`, `/api/files`, `/api/file` (GET/PUT), `/events` (SSE), and `/**` (static asset wildcard).
 - **Frontend** — Vite + TypeScript + Tailwind v4 + vanilla TS. CodeMirror 6 with a custom decoration plugin for the inline ("Mode A") view, markdown-it pipeline for the rendered preview ("Mode B"), with KaTeX, GitHub-style alerts, footnotes, GFM tables/strike/task-lists, and lazy-loaded Mermaid.
 
-See `docs/superpowers/specs/2026-05-09-reed-frontend-design.md` for the full design.
+See [`docs/architecture.md`](docs/architecture.md) for the full design.
