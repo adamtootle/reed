@@ -2,6 +2,14 @@
 
 A local markdown editor served in your browser. Launch it from the CLI against a directory or a single `.md` file, and it opens an editor in your default browser. Edits autosave; external changes propagate via SSE.
 
+## Install
+
+```bash
+brew install adamtootle/reed/reed
+```
+
+macOS arm64 and x86_64 binaries from the [tap](https://github.com/adamtootle/homebrew-reed).
+
 ## Usage
 
 ```bash
