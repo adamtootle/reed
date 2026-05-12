@@ -49,7 +49,6 @@ const fileTree = new FileTree(sidebarTree);
 fileTree.onSelect = (path) => loadFile(path);
 
 let editor: ReedEditor | null = null;
-let lastMode: 'inline' | 'split' | null = null;
 let scrollSync: ScrollSync | null = null;
 
 const splitter = new Splitter({
@@ -134,8 +133,7 @@ function ensureEditor(): ReedEditor {
       if (s.viewMode === 'split') renderPreview();
     },
   });
-  applyMode(editor, store.get().viewMode);
-  lastMode = store.get().viewMode;
+  applyMode(editor);
   return editor;
 }
 
@@ -169,10 +167,6 @@ store.subscribe(() => {
   renderShell();
   syncSplitChrome();
   const s = store.get();
-  if (editor && s.viewMode !== lastMode) {
-    applyMode(editor, s.viewMode);
-    lastMode = s.viewMode;
-  }
   if (s.viewMode === 'split' && lastSplitMode !== 'split') {
     renderPreview();
   }
