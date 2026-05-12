@@ -1,6 +1,11 @@
 {
   "compilerOptions": {
     "composite": true,
+    // composite requires emission for project references; keep .d.ts only so
+    // `tsc -b` doesn't drop a vite.config.js next to vite.config.ts. Vite
+    // resolves `.js` ahead of `.ts`, so a stale compiled config would silently
+    // shadow the source.
+    "emitDeclarationOnly": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
