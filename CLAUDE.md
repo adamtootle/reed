@@ -88,3 +88,6 @@ The Lezer markdown parser used in the editor **must** be configured with the sam
 **Specs are living docs, not dated snapshots.** Save specs to `docs/specs/<topic>.md` (no date prefix) and edit them in place as the system evolves — they are the canonical source of truth for design decisions. Do not create new dated files for revisions; update the existing topic file. This overrides the default `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` convention from the brainstorming skill.
 
 Plans keep dates: save to `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`. Plans are point-in-time execution artifacts (one plan per implementation push) and may legitimately repeat against the same spec years apart.
+
+## Pull request titles
+Use conventional-commit prefixes in PR titles (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `ci:`, `test:`). The repo squash-merges, so GitHub uses the PR title as the merge commit's subject, and release-please reads that subject (not the squashed body) to decide version bumps. A PR titled `Add foo and bar` produces a non-conventional squash subject and gets skipped by release-please even if individual branch commits used proper prefixes. `feat:` → minor, `fix:` → patch, `feat!:` or `BREAKING CHANGE:` footer → major; the rest don't trigger a release.
