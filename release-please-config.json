@@ -4,7 +4,10 @@
   "include-component-in-tag": false,
   "packages": {
     ".": {
-      "package-name": "reed"
+      "package-name": "reed",
+      "extra-files": [
+        "Sources/reed/Version.swift"
+      ]
     }
   }
 }

@@ -25,7 +25,8 @@ enum LaunchMode: Sendable {
 struct Reed: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "reed",
-        abstract: "Local markdown editor"
+        abstract: "Local markdown editor",
+        version: ReedVersion.current
     )
 
     @Argument(help: "Markdown file or directory (defaults to current directory)")
