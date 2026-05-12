@@ -4,3 +4,4 @@ node_modules/
 Sources/reed/Resources/
 .superpowers/
 .vscode/
+.deps/
