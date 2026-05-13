@@ -6,3 +6,6 @@ Sources/reed/Resources/
 .vscode/
 .deps/
 docs/superpowers/plans/
+frontend/vite.config.js
+frontend/vite.config.d.ts
+frontend/*.tsbuildinfo

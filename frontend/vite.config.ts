@@ -23,6 +23,11 @@ export default defineConfig({
         changeOrigin: true,
         ws: false,
       },
+      // Markdown can reference relative user assets (images, media, PDFs). In
+      // production the Swift wildcard route serves these, but in dev Vite would
+      // otherwise serve its SPA fallback (index.html) and the browser would
+      // render HTML where it expected a binary. Forward them to the backend.
+      '^/.*\\.(png|jpe?g|gif|svg|webp|avif|ico|bmp|mp3|mp4|wav|ogg|webm|mov|pdf)$': 'http://localhost:8765',
     },
   },
   test: {
