@@ -106,7 +106,7 @@ struct ReedServer {
         // so without an explicit route the production page loads but stays blank.
         router.get("/assets/**") { request, _ -> Response in
             let relativePath = String(request.uri.path.dropFirst())
-            return serveBundledAsset(relativePath: relativePath)
+            return serveBundledAsset(relativePath: relativePath, in: Bundle.module.resourceURL?.standardized)
         }
 
         // Wildcard: serve arbitrary files from root (images, etc. for markdown preview).
@@ -135,8 +135,8 @@ struct ReedServer {
     }
 }
 
-func serveBundledAsset(relativePath: String) -> Response {
-    guard let bundleRoot = Bundle.module.resourceURL?.standardized else {
+func serveBundledAsset(relativePath: String, in bundleRoot: URL?) -> Response {
+    guard let bundleRoot else {
         return Response(status: .notFound, headers: [:], body: ResponseBody(byteBuffer: ByteBuffer()))
     }
     let target = bundleRoot.appendingPathComponent(relativePath).standardized
