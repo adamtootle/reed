@@ -101,6 +101,14 @@ struct ReedServer {
             )
         }
 
+        // Bundled JS/CSS/fonts emitted by `vite build` into Sources/reed/Resources/assets.
+        // These are referenced by the bundled index.html (e.g. `/assets/index-<hash>.js`),
+        // so without an explicit route the production page loads but stays blank.
+        router.get("/assets/**") { request, _ -> Response in
+            let relativePath = String(request.uri.path.dropFirst())
+            return serveBundledAsset(relativePath: relativePath)
+        }
+
         // Wildcard: serve arbitrary files from root (images, etc. for markdown preview).
         // Registered last so it only catches requests not matched by the routes above.
         router.get("/**") { [root] request, _ -> Response in
@@ -125,6 +133,25 @@ struct ReedServer {
 
         return router
     }
+}
+
+func serveBundledAsset(relativePath: String) -> Response {
+    guard let bundleRoot = Bundle.module.resourceURL?.standardized else {
+        return Response(status: .notFound, headers: [:], body: ResponseBody(byteBuffer: ByteBuffer()))
+    }
+    let target = bundleRoot.appendingPathComponent(relativePath).standardized
+    guard target.path.hasPrefix(bundleRoot.path + "/") else {
+        return Response(status: .forbidden, headers: [:], body: ResponseBody(byteBuffer: ByteBuffer()))
+    }
+    guard let data = try? Data(contentsOf: target) else {
+        return Response(status: .notFound, headers: [:], body: ResponseBody(byteBuffer: ByteBuffer()))
+    }
+    var headers = HTTPFields()
+    let ext = target.pathExtension
+    if !ext.isEmpty, let mime = UTType(filenameExtension: ext)?.preferredMIMEType {
+        headers[.contentType] = mime
+    }
+    return Response(status: .ok, headers: headers, body: ResponseBody(byteBuffer: ByteBuffer(bytes: data)))
 }
 
 func serveResource(name: String, extension ext: String, contentType: String) -> Response {
