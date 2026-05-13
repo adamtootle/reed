@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.1](https://github.com/adamtootle/reed/compare/v1.0.0...v1.0.1) (2026-05-13)
+
+
+### Bug Fixes
+
+* code block styling — light-mode visibility and editor line stripes ([#9](https://github.com/adamtootle/reed/issues/9)) ([988d1cd](https://github.com/adamtootle/reed/commit/988d1cdee3f90df20f19dd21454c981a5b3f0c5c))
+* distinguish connecting, ready, and reconnecting pill states ([#4](https://github.com/adamtootle/reed/issues/4)) ([75e2182](https://github.com/adamtootle/reed/commit/75e218280600d9a4301d780bd0eb1e0c5c072da3))
+* honor nested .gitignore files in file tree ([#3](https://github.com/adamtootle/reed/issues/3)) ([f2a7fd8](https://github.com/adamtootle/reed/commit/f2a7fd8d8b8942ca34da66245f13c78167f2956f))
+* make sidebar expand handle visible when collapsed ([#6](https://github.com/adamtootle/reed/issues/6)) ([34aa3ec](https://github.com/adamtootle/reed/commit/34aa3ec71a03efa7c35901a5fc7e2f4ace22c24f))
+* serve bundled frontend assets in release builds ([#19](https://github.com/adamtootle/reed/issues/19)) ([7a730e7](https://github.com/adamtootle/reed/commit/7a730e78d26bb100a897edb2fd073db21c3148ec))
+* serve user assets through Vite proxy in dev ([#18](https://github.com/adamtootle/reed/issues/18)) ([1ef08bf](https://github.com/adamtootle/reed/commit/1ef08bf5c8578dc38ac64ada583263ff2a33dfba))
+
 ## 1.0.0 (2026-05-10)
 
 
