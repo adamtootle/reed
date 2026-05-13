@@ -66,3 +66,94 @@ jobs:
           gh release upload ${{ needs.release-please.outputs.tag_name }} \
             reed-macos-${{ matrix.arch }}.zip \
             --repo ${{ github.repository }}
+
+  update-homebrew-tap:
+    needs: [release-please, build-macos]
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download release archives
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        run: |
+          gh release download "$TAG" \
+            --repo "${{ github.repository }}" \
+            --pattern 'reed-macos-*.zip'
+
+      - name: Compute SHA256 sums
+        id: shas
+        run: |
+          {
+            echo "arm64=$(sha256sum reed-macos-arm64.zip | awk '{print $1}')"
+            echo "x86_64=$(sha256sum reed-macos-x86_64.zip | awk '{print $1}')"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Mint tap-write token
+        id: tap_token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+          owner: adamtootle
+          repositories: homebrew-reed
+
+      - name: Checkout tap
+        uses: actions/checkout@v4
+        with:
+          repository: adamtootle/homebrew-reed
+          token: ${{ steps.tap_token.outputs.token }}
+          path: tap
+
+      - name: Rewrite Formula/reed.rb
+        env:
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+          ARM64_SHA: ${{ steps.shas.outputs.arm64 }}
+          X86_64_SHA: ${{ steps.shas.outputs.x86_64 }}
+        run: |
+          VERSION="${TAG#v}"
+          cat > tap/Formula/reed.rb <<EOF
+          class Reed < Formula
+            desc "Edit markdown locally in your browser"
+            homepage "https://github.com/adamtootle/reed"
+            version "${VERSION}"
+            license "MIT"
+
+            on_macos do
+              on_arm do
+                url "https://github.com/adamtootle/reed/releases/download/${TAG}/reed-macos-arm64.zip"
+                sha256 "${ARM64_SHA}"
+              end
+
+              on_intel do
+                url "https://github.com/adamtootle/reed/releases/download/${TAG}/reed-macos-x86_64.zip"
+                sha256 "${X86_64_SHA}"
+              end
+            end
+
+            def install
+              bin.install "reed"
+            end
+
+            test do
+              assert_match "reed", shell_output("#{bin}/reed --help")
+            end
+          end
+          EOF
+
+      - name: Commit and push to tap
+        working-directory: tap
+        env:
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+          APP_SLUG: ${{ steps.tap_token.outputs.app-slug }}
+          APP_ID: ${{ secrets.RELEASE_BOT_APP_ID }}
+        run: |
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${APP_ID}+${APP_SLUG}[bot]@users.noreply.github.com"
+          git add Formula/reed.rb
+          if git diff --cached --quiet; then
+            echo "Formula already up to date; nothing to commit."
+            exit 0
+          fi
+          git commit -m "reed ${TAG#v}"
+          git push
