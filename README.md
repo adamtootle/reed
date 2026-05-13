@@ -1,14 +1,21 @@
 # reed
 
-A local markdown editor served in your browser. Launch it from the CLI against a directory or a single `.md` file, and it opens an editor in your default browser. Edits autosave; external changes propagate via SSE.
+A local markdown editor served in your browser. Launch it from the CLI against a directory or a single `.md` file, and it opens an editor in your default browser. The preview renders GFM (tables, strikethrough, task lists), KaTeX math, Mermaid diagrams, footnotes, GitHub-style alerts, and syntax-highlighted code. Edits autosave; external changes propagate via SSE.
+
+![Inline mode — markdown styled in place](screenshots/inline.png)
+
+![Split mode — source on the left, rendered preview on the right](screenshots/split.png)
+
+## Why does this exist?
+
+Sometimes I need a quick edit or preview on a markdown file. I may not want to open VS Code or Obsidian. This came from that. This is not meant to be an alternative to any of the more robust markdown editors. This is not even the only one I use. It's just a convenient tool to have, no extra dependencies or apps to install. Just run it, make your edits, and close it out.
 
 ## Install
 
 ```bash
-brew install adamtootle/reed/reed
+brew tap adamtootle/reed
+brew install reed
 ```
-
-macOS arm64 and x86_64 binaries from the [tap](https://github.com/adamtootle/homebrew-reed).
 
 ## Usage
 
