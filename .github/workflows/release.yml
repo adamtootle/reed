@@ -57,7 +57,7 @@ jobs:
       - name: Package
         run: |
           cd .build/${{ matrix.arch }}-apple-macosx/release
-          zip ../../../reed-macos-${{ matrix.arch }}.zip reed
+          zip -r ../../../reed-macos-${{ matrix.arch }}.zip reed reed_reed.bundle
 
       - name: Upload to release
         env:
@@ -132,7 +132,7 @@ jobs:
             end
 
             def install
-              bin.install "reed"
+              bin.install "reed", "reed_reed.bundle"
             end
 
             test do
