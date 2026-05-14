@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/adamtootle/reed/compare/v1.0.2...v1.0.3) (2026-05-14)
+
+
+### Bug Fixes
+
+* install via libexec + exec wrapper for brew ([#23](https://github.com/adamtootle/reed/issues/23)) ([41b336a](https://github.com/adamtootle/reed/commit/41b336a8572a0048f5b1ada648cec8a1f19aa109))
+
 ## [1.0.2](https://github.com/adamtootle/reed/compare/v1.0.1...v1.0.2) (2026-05-14)
 
 
