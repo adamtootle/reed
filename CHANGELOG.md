@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0](https://github.com/adamtootle/reed/compare/v1.0.3...v1.1.0) (2026-05-14)
+
+
+### Features
+
+* clean startup output ([#25](https://github.com/adamtootle/reed/issues/25)) ([9eb2b35](https://github.com/adamtootle/reed/commit/9eb2b3598f2bc3090e25210f2225e7ce0bf7ec9e))
+* spotlight-style file search as directory intro ([#26](https://github.com/adamtootle/reed/issues/26)) ([b412e41](https://github.com/adamtootle/reed/commit/b412e4100166e772f3861252849344073d817aa3))
+
 ## [1.0.3](https://github.com/adamtootle/reed/compare/v1.0.2...v1.0.3) (2026-05-14)
 
 
