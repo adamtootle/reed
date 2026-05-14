@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/adamtootle/reed/compare/v1.0.1...v1.0.2) (2026-05-14)
+
+
+### Bug Fixes
+
+* include resource bundle in release zip and formula install ([#21](https://github.com/adamtootle/reed/issues/21)) ([c9bb2d2](https://github.com/adamtootle/reed/commit/c9bb2d25212af1673355da92d5613ad453ee673a))
+
 ## [1.0.1](https://github.com/adamtootle/reed/compare/v1.0.0...v1.0.1) (2026-05-13)
 
 
