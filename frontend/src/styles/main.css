@@ -301,3 +301,96 @@ html, body, #app {
 .dark #preview-pane hr { border-top-color: rgb(48, 54, 61); }
 #preview-pane img { max-width: 100%; }
 .mermaid-block { margin: 0.75em 0; }
+
+/* Spotlight (directory-mode intro UI) */
+.reed-spotlight {
+  height: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 12vh 24px 24px;
+}
+.reed-spotlight-card {
+  width: min(560px, 100%);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgb(228, 228, 231);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.dark .reed-spotlight-card {
+  background: rgba(28, 28, 32, 0.96);
+  border-color: rgb(63, 63, 70);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.reed-spotlight-input {
+  all: unset;
+  display: block;
+  padding: 14px 18px;
+  font-size: 18px;
+  color: rgb(24, 24, 27);
+  border-bottom: 1px solid rgb(228, 228, 231);
+}
+.dark .reed-spotlight-input {
+  color: rgb(244, 244, 245);
+  border-bottom-color: rgb(63, 63, 70);
+}
+.reed-spotlight-input::placeholder { color: rgb(161, 161, 170); }
+.reed-spotlight-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px 0;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.reed-spotlight-list[hidden] { display: none; }
+.reed-spotlight-item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 18px;
+  cursor: pointer;
+  font-size: 13px;
+  color: rgb(63, 63, 70);
+}
+.dark .reed-spotlight-item { color: rgb(212, 212, 216); }
+.reed-spotlight-item.active {
+  background: rgb(9, 105, 218);
+  color: rgb(255, 255, 255);
+}
+.dark .reed-spotlight-item.active {
+  background: rgb(38, 99, 235);
+  color: rgb(255, 255, 255);
+}
+.reed-spotlight-name {
+  font-weight: 600;
+}
+.reed-spotlight-dir {
+  font-size: 11px;
+  color: rgb(113, 113, 122);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.dark .reed-spotlight-dir { color: rgb(161, 161, 170); }
+.reed-spotlight-item.active .reed-spotlight-dir {
+  color: rgba(255, 255, 255, 0.78);
+}
+.reed-spotlight-item mark {
+  background: transparent;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+.reed-spotlight-item.active mark { color: inherit; }
+.reed-spotlight-empty {
+  padding: 16px 18px;
+  font-size: 13px;
+  color: rgb(113, 113, 122);
+}
+.dark .reed-spotlight-empty { color: rgb(161, 161, 170); }
+.reed-spotlight-empty[hidden] { display: none; }

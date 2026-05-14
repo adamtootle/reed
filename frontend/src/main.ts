@@ -17,6 +17,7 @@ import { renderMermaidBlocks } from './preview/mermaid';
 import { ScrollSync } from './preview/scrollSync';
 import { SidebarCollapseController } from './ui/sidebarCollapse';
 import { renderEmptyState } from './ui/emptyState';
+import { Spotlight, flattenFiles } from './ui/spotlight';
 import type { FileNode } from './api/types';
 
 const store = createStore(initialAppState);
@@ -47,6 +48,9 @@ pill.onModeChange = (m) => store.set({ viewMode: m });
 
 const fileTree = new FileTree(sidebarTree);
 fileTree.onSelect = (path) => loadFile(path);
+
+const spotlight = new Spotlight();
+spotlight.onSelect = (path) => loadFile(path);
 
 let editor: ReedEditor | null = null;
 let scrollSync: ScrollSync | null = null;
@@ -213,6 +217,7 @@ async function refreshTreeIfDirectory(): Promise<void> {
   try {
     const tree = await getFiles();
     store.set({ fileTree: tree });
+    if (spotlight.isMounted()) spotlight.updateFiles(flattenFiles(tree));
   } catch (e) {
     console.error('tree refresh failed', e);
   }
@@ -222,12 +227,14 @@ async function loadFile(path: string): Promise<void> {
   flushPendingSave(false);
   try {
     const content = await getFile(path);
+    spotlight.unmount();
     const ed = ensureEditor();
     ed.setDoc(content);
     saveDebouncer.cancel();  // fix from Issue 1: prevent bogus save after programmatic setDoc
     store.set({ currentFile: path, loadedContent: content, saveState: 'saved' });
   } catch (err) {
     console.error('loadFile failed', err);
+    spotlight.unmount();
     renderEmptyState(editorPane, { kind: 'file-deleted' });
     store.set({ currentFile: null, loadedContent: null });
   }
@@ -292,7 +299,7 @@ window.addEventListener('beforeunload', () => sse.stop());
       if (treeIsEmpty(tree)) {
         renderEmptyState(editorPane, { kind: 'no-markdown' });
       } else {
-        renderEmptyState(editorPane, { kind: 'select-file' });
+        spotlight.mount(editorPane, flattenFiles(tree));
       }
     } else if (config.mode === 'singleFile') {
       await loadFile(config.file);
