@@ -1,6 +1,7 @@
 import AppKit
 import Foundation
 import Hummingbird
+import Logging
 import UniformTypeIdentifiers
 
 struct ReedServer {
@@ -24,14 +25,20 @@ struct ReedServer {
 
         let router = buildRouter()
         let url = URL(string: "http://localhost:\(port)")!
+        // Hummingbird logs its own "Server started…" line at info. Bump to .critical
+        // so reed's own startup banner is the only thing the user sees.
+        var logger = Logger(label: "reed")
+        logger.logLevel = .critical
         let app = Application(
             router: router,
             configuration: ApplicationConfiguration(
                 address: .hostname("localhost", port: Int(port))
             ),
-            onServerRunning: { _ in
+            onServerRunning: { [root, mode] _ in
+                printStartupBanner(url: url, root: root, mode: mode)
                 NSWorkspace.shared.open(url)
-            }
+            },
+            logger: logger
         )
         try await app.runService()
     }
@@ -175,4 +182,23 @@ func serveResource(name: String, extension ext: String, contentType: String) -> 
         headers: headers,
         body: ResponseBody(byteBuffer: ByteBuffer(bytes: data))
     )
+}
+
+func printStartupBanner(url: URL, root: URL, mode: LaunchMode) {
+    let servingPath: String = {
+        switch mode {
+        case .directory:
+            return root.path
+        case .singleFile(let filename):
+            return root.appendingPathComponent(filename).path
+        }
+    }()
+    let displayPath = (servingPath as NSString).abbreviatingWithTildeInPath
+    print("reed \(ReedVersion.current) → \(url.absoluteString)")
+    print("serving \(displayPath)")
+    // When stdout is redirected (e.g. piped to a file or to a launcher's log),
+    // it switches from line-buffered to block-buffered and the banner sits
+    // in the buffer until the process exits or fills 4 KB. Flush so users
+    // watching a log see the banner the moment the server is up.
+    fflush(stdout)
 }

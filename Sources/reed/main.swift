@@ -55,8 +55,6 @@ struct Reed: ParsableCommand {
         }
         let server = ReedServer(root: root, mode: mode, port: resolvedPort)
 
-        print("Listening on http://localhost:\(resolvedPort)")
-
         Task {
             do {
                 try await server.run()
