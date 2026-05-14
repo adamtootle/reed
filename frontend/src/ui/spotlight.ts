@@ -117,6 +117,7 @@ export class Spotlight {
   private noMatch: HTMLElement | null = null;
   private files: SpotlightFile[] = [];
   private matches: ScoredMatch[] = [];
+  private items: HTMLElement[] = [];
   private selectedIndex = 0;
   private mounted = false;
 
@@ -176,13 +177,11 @@ export class Spotlight {
     if (ev.key === 'ArrowDown') {
       ev.preventDefault();
       if (this.matches.length === 0) return;
-      this.selectedIndex = (this.selectedIndex + 1) % this.matches.length;
-      this.renderList();
+      this.setSelected((this.selectedIndex + 1) % this.matches.length, true);
     } else if (ev.key === 'ArrowUp') {
       ev.preventDefault();
       if (this.matches.length === 0) return;
-      this.selectedIndex = (this.selectedIndex - 1 + this.matches.length) % this.matches.length;
-      this.renderList();
+      this.setSelected((this.selectedIndex - 1 + this.matches.length) % this.matches.length, true);
     } else if (ev.key === 'Enter') {
       ev.preventDefault();
       const pick = this.matches[this.selectedIndex];
@@ -210,6 +209,7 @@ export class Spotlight {
 
   private renderList(): void {
     if (!this.list || !this.noMatch) return;
+    this.items = [];
     if (this.matches.length === 0) {
       this.list.innerHTML = '';
       this.list.setAttribute('hidden', '');
@@ -235,17 +235,28 @@ export class Spotlight {
         <span class="reed-spotlight-name">${renderHighlighted(m.file.name, nameIndices)}</span>
         ${dirPath ? `<span class="reed-spotlight-dir">${renderHighlighted(dirPath, dirIndices)}</span>` : ''}
       `;
-      li.addEventListener('mouseenter', () => {
-        this.selectedIndex = i;
-        this.renderList();
-      });
-      li.addEventListener('click', () => {
+      // mouseenter only toggles the .active class — don't rerender. Rerendering
+      // here would destroy the <li> mid-click sequence (mousedown on the old
+      // node, mouseup on the new one) and the browser then skips the click.
+      li.addEventListener('mouseenter', () => this.setSelected(i, false));
+      // mousedown fires before the input's blur and won't get cancelled if
+      // focus shifts during the click — safer than `click` for this UI.
+      li.addEventListener('mousedown', (ev) => {
+        ev.preventDefault();
         this.onSelect?.(m.file.path);
       });
+      this.items.push(li);
       this.list.appendChild(li);
     }
-    // Keep the highlighted row in view when arrowing past the visible window.
-    const active = this.list.querySelector('.reed-spotlight-item.active') as HTMLElement | null;
-    active?.scrollIntoView({ block: 'nearest' });
+  }
+
+  private setSelected(index: number, scroll: boolean): void {
+    if (index === this.selectedIndex) return;
+    const prev = this.items[this.selectedIndex];
+    prev?.classList.remove('active');
+    this.selectedIndex = index;
+    const next = this.items[index];
+    next?.classList.add('active');
+    if (scroll) next?.scrollIntoView({ block: 'nearest' });
   }
 }
