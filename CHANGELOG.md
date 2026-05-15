@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.0](https://github.com/adamtootle/reed/compare/v1.1.0...v1.2.0) (2026-05-15)
+
+
+### Features
+
+* `swift run dev` orchestrates backend + Vite as one command ([#30](https://github.com/adamtootle/reed/issues/30)) ([c9999e8](https://github.com/adamtootle/reed/commit/c9999e82a4085dfa3b09b3e4e693339d02ff53b9))
+
+
+### Bug Fixes
+
+* don't drop the click event on Spotlight rows ([#28](https://github.com/adamtootle/reed/issues/28)) ([b20e1e3](https://github.com/adamtootle/reed/commit/b20e1e3a321d2d2b3b574948d72e13df10aeb94b))
+
 ## [1.1.0](https://github.com/adamtootle/reed/compare/v1.0.3...v1.1.0) (2026-05-14)
 
 
