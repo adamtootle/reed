@@ -35,6 +35,9 @@ struct Reed: ParsableCommand {
     @Option(name: .long, help: "Port to bind (default: 8765 in dev, OS-assigned in release; 0 = OS-assigned)")
     var port: UInt16?
 
+    @Flag(name: .long, help: "Don't open the browser on startup (used by `swift run dev`, which opens the Vite URL itself)")
+    var noOpen: Bool = false
+
     mutating func run() throws {
         // Hummingbird's graceful shutdown waits for in-flight responses to drain,
         // and the long-lived SSE connection at /events never does — so Ctrl+C
@@ -53,7 +56,7 @@ struct Reed: ParsableCommand {
             fputs("reed: \(error.description)\n", stderr)
             throw ExitCode.failure
         }
-        let server = ReedServer(root: root, mode: mode, port: resolvedPort)
+        let server = ReedServer(root: root, mode: mode, port: resolvedPort, openBrowser: !noOpen)
 
         Task {
             do {

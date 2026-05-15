@@ -5,7 +5,8 @@ let package = Package(
     name: "reed",
     platforms: [.macOS(.v14)],
     products: [
-        .executable(name: "reed", targets: ["reed"])
+        .executable(name: "reed", targets: ["reed"]),
+        .executable(name: "dev", targets: ["dev"]),
     ],
     dependencies: [
         .package(url: "https://github.com/hummingbird-project/hummingbird", from: "2.0.0"),
@@ -21,6 +22,11 @@ let package = Package(
             resources: [
                 .copy("Resources")
             ]
+        ),
+        // `swift run dev [path]` — orchestrates the Swift backend and Vite dev server
+        // as one foregrounded command. Not packaged in release builds.
+        .executableTarget(
+            name: "dev"
         ),
         .testTarget(
             name: "reedTests",
