@@ -8,7 +8,15 @@ struct ReedServer {
     let root: URL
     let mode: LaunchMode
     let port: UInt16
+    let openBrowser: Bool
     let broadcaster = SSEBroadcaster()
+
+    init(root: URL, mode: LaunchMode, port: UInt16, openBrowser: Bool = true) {
+        self.root = root
+        self.mode = mode
+        self.port = port
+        self.openBrowser = openBrowser
+    }
 
     func run() async throws {
         let watcher = FileWatcher(root: root)
@@ -34,9 +42,11 @@ struct ReedServer {
             configuration: ApplicationConfiguration(
                 address: .hostname("localhost", port: Int(port))
             ),
-            onServerRunning: { [root, mode] _ in
+            onServerRunning: { [root, mode, openBrowser] _ in
                 printStartupBanner(url: url, root: root, mode: mode)
-                NSWorkspace.shared.open(url)
+                if openBrowser {
+                    NSWorkspace.shared.open(url)
+                }
             },
             logger: logger
         )

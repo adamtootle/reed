@@ -4,9 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
+### Dev (both servers in one command)
+```bash
+swift run dev                           # spawn backend + Vite for the current directory
+swift run dev ~/notes                   # ...against a specific directory
+```
+`swift run dev` is the default dev workflow. It builds reed, spawns the Swift backend on `:8765` (with `--no-open`) and Vite on `:5173`, prefixes their output `[reed]` / `[vite]`, opens the Vite URL once it's ready, and tears both children down on Ctrl+C. First run also does `npm install` in `frontend/` if `node_modules` is missing. The orchestrator lives at `Sources/dev/main.swift` as a second `.executableTarget` — it's not packaged in release builds.
+
 ### Backend (Swift)
 ```bash
-swift run reed --port 8765 ~/notes      # dev run; opens default browser at the bound URL
+swift run reed --port 8765 ~/notes      # run backend alone; opens default browser at the bound URL
+swift run reed --no-open --port 8765 .  # same but skip the browser (used by `swift run dev`)
 swift test                              # run the XCTest suite
 swift test --filter <TestName>          # run a single test or test class
 swift build -c release                  # production build (uses bundled frontend assets)
@@ -24,8 +32,13 @@ npx vitest run -t "pattern"             # by test name
 npm run build                           # tsc -b && vite build → outputs to ../Sources/reed/Resources
 ```
 
-### Two-terminal dev workflow
-The default workflow is: Swift backend on `:8765` in one terminal, Vite dev server on `:5173` in another. Open the Vite URL — Vite's proxy forwards `/api/*` and `/events` to the backend so HMR works on the frontend while the backend serves data. Production runs from a single binary (Swift serves the bundled assets via `Bundle.module`).
+### Two-terminal fallback
+If you'd rather run the servers separately (e.g. to attach a debugger to one side), do it the long way: `swift run reed --port 8765 <path>` in one terminal, `npm run dev` (in `frontend/`) in another, then open the Vite URL. Vite's proxy forwards `/api/*` and `/events` to the backend so HMR works on the frontend while the backend serves data. Production runs from a single binary (Swift serves the bundled assets via `Bundle.module`).
+
+### Dev launcher internals (`Sources/dev/main.swift`)
+Two non-obvious bits that came up while building this:
+- **Signal handling uses `sigaction` with a `@convention(c)` handler, not `DispatchSource`.** The dispatch-source version silently failed to fire on `kill -INT` and left both children orphaned. The C handler uses only async-signal-safe calls (`kill`, `write`, `nanosleep`, `_exit`); child PIDs live as `nonisolated(unsafe)` module-level vars because the C function can't capture.
+- **Pre-build reed before launching it**, so `[reed]` output is just runtime logs. If you let `swift run reed` build inside the orchestrator, SPM's build progress gets line-prefixed and looks awful.
 
 ## Architecture
 

@@ -30,19 +30,24 @@ The release binary defaults to an OS-assigned port. Pass `--port <n>` to pin one
 
 ## Development
 
-Two terminals:
+```bash
+swift run dev               # current directory
+swift run dev ~/notes       # specific directory
+```
+
+`swift run dev` spawns the Swift backend on `:8765` and the Vite dev server on `:5173` in one foregrounded process, prefixes their output (`[reed]` / `[vite]`), opens the Vite URL in your browser once it's ready, and tears both children down on Ctrl+C. The first run installs frontend deps via `npm install` if `frontend/node_modules` is missing.
+
+The Vite dev server proxies `/api/*`, `/events`, and non-asset paths to the Swift backend, so HMR works on the frontend while the backend serves data.
+
+If you'd rather run the two servers separately:
 
 ```bash
 # Terminal 1 — Swift backend (DEBUG builds default to port 8765)
 swift run reed --port 8765 ~/path/to/notes
 
-# Terminal 2 — Vite dev server with proxy to the backend
-cd frontend
-npm install
-npm run dev
+# Terminal 2 — Vite dev server
+cd frontend && npm install && npm run dev
 ```
-
-Open the URL printed by Vite (usually `http://localhost:5173`). The Vite dev server proxies `/api/*`, `/events`, and other non-asset paths to the Swift backend on 8765, so HMR works while the backend handles all data.
 
 ### Test suites
 
